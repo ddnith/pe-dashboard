@@ -3,1043 +3,863 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Global PE Ratio Dashboard · CSPX · VWRA · Nifty 50</title>
-<meta name="description" content="Track current and historical P/E ratios for CSPX (S&P 500), VWRA (FTSE All-World) and Nifty 50. Free valuation dashboard for long-term investors.">
+<title>PE Ratio Dashboard · CSPX · VWRA · Nifty 50</title>
+<meta name="description" content="Current and historical P/E ratios for CSPX, VWRA and Nifty 50, with Fed Model earnings yield vs bond yield analysis.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg: #0c0c0b;
-    --bg2: #141413;
-    --bg3: #1c1c1a;
-    --bg4: #242421;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.12);
-    --text: #e8e6df;
-    --text2: #9a9890;
-    --text3: #5c5b57;
-    --accent-gold: #c8a96e;
-    --accent-gold2: #e8c98e;
-    --accent-teal: #4db89a;
-    --accent-coral: #e07b5a;
-    --accent-blue: #6fa4d4;
-    --accent-amber: #d4a44c;
-    --font-display: 'Fraunces', Georgia, serif;
-    --font-mono: 'DM Mono', 'Courier New', monospace;
-    --radius: 6px;
-    --radius-lg: 10px;
-  }
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: #e4e2da;
+  --border2: #ccc9be;
+  --text: #1a1917;
+  --text2: #6b6860;
+  --text3: #a09d96;
+  --blue: #2563a8;
+  --blue-bg: #eef3fb;
+  --green: #1a6b4a;
+  --green-bg: #eaf4ef;
+  --amber: #92610a;
+  --amber-bg: #fdf3e0;
+  --red: #991f1f;
+  --red-bg: #fdf0f0;
+  --font: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --r: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 14px; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-weight: 300; line-height: 1.6; }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 40px; height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text); }
+.logo em { font-style: normal; color: var(--text3); font-weight: 300; }
+nav { display: flex; gap: 2px; }
+.nb {
+  background: none; border: none; font-family: var(--font);
+  font-size: 13px; font-weight: 300; color: var(--text2);
+  padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.12s;
+}
+.nb:hover { background: var(--surface2); color: var(--text); }
+.nb.on { background: var(--surface2); color: var(--text); font-weight: 400; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.date-chip { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+#refresh-btn {
+  background: none; border: 1px solid var(--border2);
+  font-family: var(--font); font-size: 12px; font-weight: 400;
+  color: var(--text2); padding: 5px 14px; border-radius: 6px;
+  cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.12s;
+}
+#refresh-btn:hover { border-color: var(--blue); color: var(--blue); }
+#refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.spin { animation: spin 0.9s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  html { scroll-behavior: smooth; }
+.page { display: none; max-width: 1100px; margin: 0 auto; padding: 36px 40px 60px; }
+.page.on { display: block; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    line-height: 1.6;
-    min-height: 100vh;
-  }
+#status {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 10px 14px; font-size: 12px; color: var(--text2);
+  margin-bottom: 28px; font-family: var(--mono); min-height: 42px;
+}
+#status.ok { background: var(--green-bg); border-color: #b6deca; color: var(--green); }
+#status.err { background: var(--red-bg); border-color: #f1c0c0; color: var(--red); }
 
-  /* ── HEADER ── */
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 0 32px;
-    position: sticky;
-    top: 0;
-    background: rgba(12,12,11,0.92);
-    backdrop-filter: blur(12px);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-  }
+.page-title { margin-bottom: 28px; }
+.page-title h1 { font-size: 22px; font-weight: 300; letter-spacing: -0.02em; margin-bottom: 4px; }
+.page-title p { font-size: 13px; color: var(--text2); }
 
-  .logo {
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--accent-gold);
-    letter-spacing: -0.01em;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .logo span { color: var(--text2); font-size: 12px; font-family: var(--font-mono); font-weight: 300; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 24px; }
 
-  nav { display: flex; gap: 4px; }
-  .nav-btn {
-    background: transparent;
-    border: none;
-    color: var(--text3);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 6px 12px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .nav-btn:hover { color: var(--text); background: var(--bg3); }
-  .nav-btn.active { color: var(--accent-gold); background: var(--bg3); }
+.ticker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+.ticker-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 20px; border-top: 3px solid transparent;
+}
+.ticker-card.tc-blue { border-top-color: var(--blue); }
+.ticker-card.tc-green { border-top-color: var(--green); }
+.ticker-card.tc-amber { border-top-color: var(--amber); }
+.tc-label { font-size: 11px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.04em; margin-bottom: 4px; }
+.tc-name { font-size: 12px; color: var(--text2); margin-bottom: 14px; }
+.tc-pe { font-size: 38px; font-weight: 300; letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px; font-family: var(--mono); }
+.tc-blue .tc-pe { color: var(--blue); }
+.tc-green .tc-pe { color: var(--green); }
+.tc-amber .tc-pe { color: var(--amber); }
+.tc-meta { display: flex; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.tc-meta-item { font-size: 11px; color: var(--text3); }
+.tc-meta-item strong { display: block; font-size: 12px; color: var(--text2); font-weight: 400; }
 
-  .header-right { display: flex; align-items: center; gap: 12px; }
+.zone {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; padding: 2px 9px; border-radius: 100px;
+}
+.zone::before { content:''; width:6px; height:6px; border-radius:50%; display:inline-block; }
+.z-cheap { background: var(--blue-bg); color: var(--blue); }
+.z-cheap::before { background: var(--blue); }
+.z-fair { background: var(--green-bg); color: var(--green); }
+.z-fair::before { background: var(--green); }
+.z-elevated { background: var(--amber-bg); color: var(--amber); }
+.z-elevated::before { background: var(--amber); }
+.z-expensive { background: var(--red-bg); color: var(--red); }
+.z-expensive::before { background: var(--red); }
 
-  #refresh-btn {
-    display: flex; align-items: center; gap: 6px;
-    background: transparent;
-    border: 1px solid var(--border2);
-    color: var(--text2);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    padding: 6px 14px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  #refresh-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
-  #refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .spin { display: inline-block; animation: rotate 0.9s linear infinite; }
-  @keyframes rotate { to { transform: rotate(360deg); } }
+.section { margin-top: 36px; }
+.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.section-title { font-size: 14px; font-weight: 400; }
+.section-sub { font-size: 12px; color: var(--text3); }
 
-  /* ── PAGES ── */
-  .page { display: none; padding: 40px 32px; max-width: 1200px; margin: 0 auto; }
-  .page.active { display: block; }
-  @media (max-width: 768px) { .page { padding: 24px 16px; } header { padding: 0 16px; } }
+.gauge-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.gauge-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 20px; }
+.gauge-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.gauge-name { font-size: 12px; color: var(--text2); margin-bottom: 3px; }
+.gauge-val { font-family: var(--mono); font-size: 22px; color: var(--text); }
+.gauge-track { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.gauge-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 4px; font-family: var(--mono); }
+.gauge-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.gs { font-size: 11px; color: var(--text3); }
+.gs strong { display: block; font-size: 12px; font-weight: 400; color: var(--text2); font-family: var(--mono); }
 
-  /* ── HERO TICKER STRIP ── */
-  .ticker-strip {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-  @media (max-width: 640px) { .ticker-strip { grid-template-columns: 1fr; } }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 24px; margin-bottom: 12px; }
+.chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 10px; }
+.chart-title { font-size: 14px; font-weight: 400; }
+.chart-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin: 12px 0; }
+.li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.ld { width: 14px; height: 2px; border-radius: 1px; }
+.ld-dash { width: 14px; height: 1px; border-top: 1.5px dashed; }
+.chart-wrap { position: relative; width: 100%; }
+.chart-note { font-size: 11px; color: var(--text3); margin-top: 12px; line-height: 1.6; font-family: var(--mono); }
 
-  .ticker-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 22px 24px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .ticker-card:hover { border-color: var(--border2); }
-  .ticker-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-  .ticker-card.cspx::before { background: var(--accent-blue); }
-  .ticker-card.vwra::before { background: var(--accent-teal); }
-  .ticker-card.nifty::before { background: var(--accent-amber); }
+.range-row { display: flex; gap: 4px; }
+.rb {
+  background: none; border: 1px solid var(--border); font-family: var(--mono);
+  font-size: 11px; color: var(--text3); padding: 3px 10px;
+  border-radius: 5px; cursor: pointer; transition: all 0.12s;
+}
+.rb:hover { border-color: var(--border2); color: var(--text); }
+.rb.on { border-color: var(--blue); color: var(--blue); background: var(--blue-bg); }
 
-  .tc-ticker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
-  .tc-name { font-family: var(--font-display); font-size: 15px; color: var(--text); margin-bottom: 12px; font-weight: 300; }
-  .tc-pe { font-size: 36px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; margin-bottom: 4px; }
-  .cspx .tc-pe { color: var(--accent-blue); }
-  .vwra .tc-pe { color: var(--accent-teal); }
-  .nifty .tc-pe { color: var(--accent-amber); }
-  .tc-label { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 8px; }
-  .zone-badge {
-    font-size: 10px; padding: 2px 8px; border-radius: 100px;
-    font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
-  }
-  .z-cheap { background: rgba(77,184,154,0.15); color: var(--accent-teal); }
-  .z-fair { background: rgba(200,169,110,0.12); color: var(--accent-gold); }
-  .z-elevated { background: rgba(212,164,76,0.15); color: var(--accent-amber); }
-  .z-expensive { background: rgba(224,123,90,0.15); color: var(--accent-coral); }
+.tbl-wrap { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.tbl-scroll { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 580px; }
+thead { position: sticky; top: 0; z-index: 2; }
+th { background: var(--surface2); font-weight: 400; font-size: 11px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.04em; padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+td { padding: 8px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--surface2); }
+.tr { text-align: right; font-family: var(--mono); }
 
-  .tc-meta { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; gap: 20px; }
-  .tc-meta-item { font-size: 10px; color: var(--text3); }
-  .tc-meta-item strong { display: block; color: var(--text2); font-size: 12px; margin-bottom: 1px; font-weight: 400; }
+.fed-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.fed-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 20px; }
+.fed-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+.fed-val { font-size: 26px; font-weight: 300; font-family: var(--mono); color: var(--text); letter-spacing: -0.02em; }
+.fed-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
 
-  /* ── STATUS BAR ── */
-  #status-bar {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 16px;
-    font-size: 11px;
-    color: var(--text3);
-    margin-bottom: 28px;
-    display: flex; align-items: center; gap: 8px;
-    min-height: 40px;
-  }
-  #status-bar.ok { color: var(--accent-teal); border-color: rgba(77,184,154,0.2); }
-  #status-bar.err { color: var(--accent-coral); border-color: rgba(224,123,90,0.2); }
+.tip-wrap { position: relative; display: inline-block; }
+.tip-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1px solid var(--border2); color: var(--text3);
+  font-size: 10px; cursor: help; font-family: var(--mono);
+  margin-left: 5px; vertical-align: middle; transition: all 0.12s;
+}
+.tip-icon:hover { border-color: var(--blue); color: var(--blue); }
+.tip-box {
+  display: none; position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  background: var(--text); color: #f5f4f0;
+  font-size: 11px; font-weight: 300; line-height: 1.6;
+  padding: 10px 14px; border-radius: 6px; width: 260px; z-index: 200;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); pointer-events: none;
+}
+.tip-box::after {
+  content: ''; position: absolute; top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: var(--text);
+}
+.tip-wrap:hover .tip-box { display: block; }
 
-  /* ── SECTION HEADERS ── */
-  .section-hdr {
-    display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px;
-  }
-  .section-hdr h2 {
-    font-family: var(--font-display);
-    font-size: 18px;
-    font-weight: 300;
-    color: var(--text);
-    letter-spacing: -0.01em;
-  }
-  .section-hdr .section-sub {
-    font-size: 11px; color: var(--text3); letter-spacing: 0.04em;
-  }
+.info-panel {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-left: 3px solid var(--amber); border-radius: var(--r);
+  padding: 14px 16px; font-size: 12px; color: var(--text2);
+  line-height: 1.7; margin-bottom: 16px;
+}
+.info-panel strong { font-weight: 500; color: var(--text); }
+.info-panel.blue { border-left-color: var(--blue); }
 
-  /* ── CHART CONTAINERS ── */
-  .chart-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    margin-bottom: 16px;
-  }
-  .chart-controls {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
-  }
-  .chart-title { font-family: var(--font-display); font-size: 15px; font-weight: 300; color: var(--text); }
-  .chart-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.method-section { margin-bottom: 28px; }
+.method-section h2 { font-size: 16px; font-weight: 400; margin-bottom: 10px; }
+.method-section p { font-size: 13px; color: var(--text2); line-height: 1.8; margin-bottom: 8px; }
+.method-section ul { padding-left: 18px; }
+.method-section li { font-size: 13px; color: var(--text2); line-height: 1.8; margin-bottom: 4px; }
+.source-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 10px;
+  font-size: 11px; font-family: var(--mono); color: var(--text2);
+  text-decoration: none; margin: 3px;
+}
+.source-chip:hover { border-color: var(--blue); color: var(--blue); }
+.divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
-  .range-group { display: flex; gap: 4px; }
-  .range-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text3);
-    font-family: var(--font-mono);
-    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 4px 10px; border-radius: var(--radius);
-    cursor: pointer; transition: all 0.15s;
-  }
-  .range-btn:hover { border-color: var(--border2); color: var(--text); }
-  .range-btn.on { border-color: var(--accent-gold); color: var(--accent-gold); background: rgba(200,169,110,0.08); }
+footer { border-top: 1px solid var(--border); padding: 20px 40px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start; }
+footer p { font-size: 11px; color: var(--text3); line-height: 1.7; }
+footer a { color: var(--text2); text-underline-offset: 2px; }
+footer a:hover { color: var(--blue); }
 
-  .legend-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2); }
-  .legend-dot { width: 10px; height: 3px; border-radius: 2px; }
-  .legend-dashed { width: 16px; height: 1px; border-top: 1.5px dashed; }
-
-  .chart-wrap { position: relative; width: 100%; }
-
-  .chart-note { font-size: 10px; color: var(--text3); margin-top: 12px; line-height: 1.5; }
-
-  /* ── DATA TABLE ── */
-  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); }
-  table {
-    width: 100%; border-collapse: collapse; font-size: 12px;
-    min-width: 560px;
-  }
-  thead { position: sticky; top: 0; }
-  th {
-    background: var(--bg3);
-    color: var(--text3);
-    font-family: var(--font-mono);
-    font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 10px 14px; text-align: left; font-weight: 400;
-    border-bottom: 1px solid var(--border);
-  }
-  td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--bg3); }
-  .td-num { text-align: right; font-variant-numeric: tabular-nums; }
-  .td-year { font-weight: 500; color: var(--text2); }
-  .td-spread { color: var(--text3); }
-
-  /* ── GAUGE ── */
-  .gauges-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 28px; }
-  .gauge-card {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 20px;
-  }
-  .gauge-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
-  .gauge-ticker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 3px; }
-  .gauge-pe { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; }
-  .gauge-track { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
-  .gauge-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.4,0,.2,1); }
-  .gauge-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--text3); letter-spacing: 0.04em; }
-  .gauge-stats { display: flex; gap: 16px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-  .gs-item { font-size: 10px; color: var(--text3); }
-  .gs-item strong { display: block; font-size: 13px; color: var(--text2); font-weight: 400; margin-bottom: 1px; }
-
-  /* ── COMPARE PAGE ── */
-  .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 28px; }
-  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
-  .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-  .stat-value { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); margin-bottom: 2px; }
-  .stat-sub { font-size: 10px; color: var(--text3); }
-
-  /* ── FOOTER ── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 24px 32px;
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 12px;
-  }
-  footer p { font-size: 11px; color: var(--text3); line-height: 1.7; }
-  footer a { color: var(--text2); text-decoration: none; }
-  footer a:hover { color: var(--accent-gold); }
-
-  /* ── NIFTY NOTE ── */
-  .nifty-note {
-    background: rgba(212,164,76,0.05);
-    border: 1px solid rgba(212,164,76,0.2);
-    border-radius: var(--radius);
-    padding: 12px 16px;
-    font-size: 11px; color: var(--accent-amber);
-    margin-bottom: 20px; line-height: 1.6;
-  }
-
-  /* ── FADE IN ── */
-  .fade-in { animation: fadeUp 0.4s ease both; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+@media (max-width: 720px) {
+  .page { padding: 24px 16px 48px; }
+  header { padding: 0 16px; }
+  nav .nb { padding: 6px 8px; font-size: 12px; }
+  .ticker-grid { grid-template-columns: 1fr; }
+  footer { padding: 16px; }
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    ◈ valuation.watch <span>/ global PE ratios</span>
-  </div>
+  <div class="logo">PE Ratio Dashboard <em>· CSPX · VWRA · Nifty 50</em></div>
   <nav>
-    <button class="nav-btn active" onclick="goPage('overview',this)">Overview</button>
-    <button class="nav-btn" onclick="goPage('charts',this)">Charts</button>
-    <button class="nav-btn" onclick="goPage('data',this)">Data</button>
-    <button class="nav-btn" onclick="goPage('compare',this)">Compare</button>
+    <button class="nb on" onclick="goPage('overview',this)">Overview</button>
+    <button class="nb" onclick="goPage('charts',this)">Charts</button>
+    <button class="nb" onclick="goPage('fedmodel',this)">Fed Model</button>
+    <button class="nb" onclick="goPage('data',this)">Data Table</button>
+    <button class="nb" onclick="goPage('methodology',this)">Methodology</button>
   </nav>
-  <div class="header-right">
-    <span style="font-size:10px;color:var(--text3);" id="hdr-date">—</span>
-    <button id="refresh-btn" onclick="doRefresh()">
-      <span id="ri">↻</span> Refresh
-    </button>
+  <div class="hdr-right">
+    <span class="date-chip" id="hdr-date"></span>
+    <button id="refresh-btn" onclick="doRefresh()"><span id="ri">↻</span> Refresh</button>
   </div>
 </header>
 
-<!-- ══════════════ OVERVIEW PAGE ══════════════ -->
-<div class="page active" id="page-overview">
-
-  <div id="status-bar">
-    <span>◎</span>
-    <span id="status-msg">Showing cached data — click Refresh to fetch latest readings</span>
+<!-- OVERVIEW -->
+<div class="page on" id="page-overview">
+  <div id="status"><span>◎ &nbsp;</span><span id="status-msg">Showing cached data. Click Refresh to fetch live readings.</span></div>
+  <div class="page-title">
+    <h1>Global market valuations</h1>
+    <p>Current P/E ratios and historical context — updated via live web search on refresh</p>
   </div>
 
-  <div class="ticker-strip">
-    <!-- CSPX -->
-    <div class="ticker-card cspx">
-      <div class="tc-ticker">CSPX · LSE</div>
-      <div class="tc-name">iShares Core S&amp;P 500 UCITS</div>
-      <div class="tc-pe" id="cspx-pe-big">27.89</div>
-      <div class="tc-label">
-        P/E TTM &nbsp;
-        <span class="zone-badge z-elevated" id="cspx-zone">Elevated</span>
+  <div class="ticker-grid">
+    <div class="ticker-card tc-blue">
+      <div class="tc-label">CSPX · LSE · USD</div>
+      <div class="tc-name">iShares Core S&amp;P 500 UCITS ETF</div>
+      <div class="tc-pe" id="v-cspx">27.89</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:var(--text3)">P/E TTM</span>
+        <span class="zone z-elevated" id="z-cspx">Elevated</span>
       </div>
       <div class="tc-meta">
-        <div class="tc-meta-item"><strong id="cspx-vs-avg">+30%</strong>vs 25Y avg</div>
+        <div class="tc-meta-item"><strong id="pct-cspx">+30%</strong>vs 25Y avg</div>
         <div class="tc-meta-item"><strong>21.4×</strong>25Y avg</div>
         <div class="tc-meta-item"><strong>0.07%</strong>TER</div>
-        <div class="tc-meta-item"><strong>USD</strong>Acc.</div>
       </div>
     </div>
-    <!-- VWRA -->
-    <div class="ticker-card vwra">
-      <div class="tc-ticker">VWRA · LSE</div>
-      <div class="tc-name">Vanguard FTSE All-World UCITS</div>
-      <div class="tc-pe" id="vwra-pe-big">21.04</div>
-      <div class="tc-label">
-        P/E TTM &nbsp;
-        <span class="zone-badge z-elevated" id="vwra-zone">Overvalued</span>
+    <div class="ticker-card tc-green">
+      <div class="tc-label">VWRA · LSE · USD</div>
+      <div class="tc-name">Vanguard FTSE All-World UCITS ETF</div>
+      <div class="tc-pe" id="v-vwra">21.04</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:var(--text3)">P/E TTM</span>
+        <span class="zone z-elevated" id="z-vwra">Overvalued</span>
       </div>
       <div class="tc-meta">
-        <div class="tc-meta-item"><strong id="vwra-vs-avg">+41%</strong>vs 20Y avg</div>
+        <div class="tc-meta-item"><strong id="pct-vwra">+41%</strong>vs 20Y avg</div>
         <div class="tc-meta-item"><strong>14.9×</strong>20Y avg</div>
         <div class="tc-meta-item"><strong>0.22%</strong>TER</div>
-        <div class="tc-meta-item"><strong>USD</strong>Acc.</div>
       </div>
     </div>
-    <!-- NIFTY -->
-    <div class="ticker-card nifty">
-      <div class="tc-ticker">NIFTY 50 · NSE</div>
-      <div class="tc-name">Nifty 50 Index (Consolidated)</div>
-      <div class="tc-pe" id="nifty-pe-big">20.23</div>
-      <div class="tc-label">
-        P/E TTM &nbsp;
-        <span class="zone-badge z-fair" id="nifty-zone">Fairly Valued</span>
+    <div class="ticker-card tc-amber">
+      <div class="tc-label">NIFTY 50 · NSE · INR</div>
+      <div class="tc-name">Nifty 50 Index (Consolidated basis)</div>
+      <div class="tc-pe" id="v-nifty">20.23</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:var(--text3)">P/E TTM</span>
+        <span class="zone z-fair" id="z-nifty">Fairly Valued</span>
       </div>
       <div class="tc-meta">
-        <div class="tc-meta-item"><strong id="nifty-vs-avg">−4%</strong>vs 20Y avg</div>
-        <div class="tc-meta-item"><strong>21.0×</strong>20Y avg</div>
+        <div class="tc-meta-item"><strong id="pct-nifty">−4%</strong>vs 20Y avg</div>
         <div class="tc-meta-item"><strong>3.14</strong>P/B</div>
         <div class="tc-meta-item"><strong>1.35%</strong>Div. yield</div>
       </div>
     </div>
   </div>
 
-  <!-- GAUGES -->
-  <div class="section-hdr"><h2>Valuation gauges</h2><span class="section-sub">relative to historical ranges</span></div>
-  <div class="gauges-grid">
-
-    <div class="gauge-card">
-      <div class="gauge-header">
-        <div>
-          <div class="gauge-ticker">CSPX · S&amp;P 500</div>
-          <div class="gauge-pe" style="color:var(--accent-blue)" id="g-cspx-val">27.89×</div>
+  <div class="section">
+    <div class="section-hdr">
+      <span class="section-title">Valuation gauges
+        <span class="tip-wrap"><span class="tip-icon">?</span>
+          <span class="tip-box">Each bar shows the current P/E relative to the full historical range for that index. Band boundaries are set at ±1 standard deviation from the long-run mean.</span>
+        </span>
+      </span>
+    </div>
+    <div class="gauge-section">
+      <div class="gauge-card">
+        <div class="gauge-top">
+          <div><div class="gauge-name">CSPX · S&amp;P 500</div><div class="gauge-val" id="gv-cspx">27.89×</div></div>
+          <span class="zone z-elevated" id="gz-cspx">Elevated</span>
         </div>
-        <span class="zone-badge z-elevated" id="g-cspx-z">Elevated</span>
+        <div class="gauge-track"><div class="gauge-fill" id="gf-cspx" style="width:70%;background:var(--amber)"></div></div>
+        <div class="gauge-axis"><span>10×</span><span>Cheap · Fair · Elevated · Expensive</span><span>42×</span></div>
+        <div class="gauge-stats">
+          <div class="gs"><strong>21.4×</strong>25Y avg</div>
+          <div class="gs"><strong>26.2×</strong>5Y avg</div>
+          <div class="gs"><strong>35.96×</strong>2021 peak</div>
+          <div class="gs"><strong>14.87×</strong>2012 low</div>
+        </div>
       </div>
-      <div class="gauge-track"><div class="gauge-fill" id="gf-cspx" style="background:var(--accent-amber);width:70%"></div></div>
-      <div class="gauge-labels"><span>Cheap</span><span>Fair · 15–22</span><span>Expensive</span></div>
-      <div class="gauge-stats">
-        <div class="gs-item"><strong>21.4×</strong>25Y avg</div>
-        <div class="gs-item"><strong>26.2×</strong>5Y avg</div>
-        <div class="gs-item"><strong>35.96×</strong>2021 peak</div>
-        <div class="gs-item"><strong>14.87×</strong>2012 low</div>
+      <div class="gauge-card">
+        <div class="gauge-top">
+          <div><div class="gauge-name">VWRA · FTSE All-World</div><div class="gauge-val" id="gv-vwra">21.04×</div></div>
+          <span class="zone z-elevated" id="gz-vwra">Overvalued</span>
+        </div>
+        <div class="gauge-track"><div class="gauge-fill" id="gf-vwra" style="width:60%;background:var(--amber)"></div></div>
+        <div class="gauge-axis"><span>10×</span><span>Cheap · Fair · Elevated · Expensive</span><span>30×</span></div>
+        <div class="gauge-stats">
+          <div class="gs"><strong>14.9×</strong>20Y avg</div>
+          <div class="gs"><strong>18.6×</strong>5Y avg</div>
+          <div class="gs"><strong>24.2×</strong>2021 peak</div>
+          <div class="gs"><strong>12.2×</strong>2012 low</div>
+        </div>
+      </div>
+      <div class="gauge-card">
+        <div class="gauge-top">
+          <div><div class="gauge-name">Nifty 50 · NSE India</div><div class="gauge-val" id="gv-nifty">20.23×</div></div>
+          <span class="zone z-fair" id="gz-nifty">Fairly Valued</span>
+        </div>
+        <div class="gauge-track"><div class="gauge-fill" id="gf-nifty" style="width:50%;background:var(--green)"></div></div>
+        <div class="gauge-axis"><span>10×</span><span>Cheap · Fair · Elevated · Expensive</span><span>38×</span></div>
+        <div class="gauge-stats">
+          <div class="gs"><strong>21.0×</strong>20Y avg</div>
+          <div class="gs"><strong>21.4×</strong>median</div>
+          <div class="gs"><strong>32×</strong>2021 cons.</div>
+          <div class="gs"><strong>12.7×</strong>2008 low</div>
+        </div>
       </div>
     </div>
-
-    <div class="gauge-card">
-      <div class="gauge-header">
-        <div>
-          <div class="gauge-ticker">VWRA · FTSE All-World</div>
-          <div class="gauge-pe" style="color:var(--accent-teal)" id="g-vwra-val">21.04×</div>
-        </div>
-        <span class="zone-badge z-elevated" id="g-vwra-z">Overvalued</span>
-      </div>
-      <div class="gauge-track"><div class="gauge-fill" id="gf-vwra" style="background:var(--accent-amber);width:65%"></div></div>
-      <div class="gauge-labels"><span>Cheap</span><span>Fair · 13–18</span><span>Expensive</span></div>
-      <div class="gauge-stats">
-        <div class="gs-item"><strong>14.9×</strong>20Y avg</div>
-        <div class="gs-item"><strong>18.6×</strong>5Y avg</div>
-        <div class="gs-item"><strong>24.2×</strong>2021 peak</div>
-        <div class="gs-item"><strong>13.9×</strong>2008 low</div>
-      </div>
-    </div>
-
-    <div class="gauge-card">
-      <div class="gauge-header">
-        <div>
-          <div class="gauge-ticker">Nifty 50 · NSE India</div>
-          <div class="gauge-pe" style="color:var(--accent-amber)" id="g-nifty-val">20.23×</div>
-        </div>
-        <span class="zone-badge z-fair" id="g-nifty-z">Fairly Valued</span>
-      </div>
-      <div class="gauge-track"><div class="gauge-fill" id="gf-nifty" style="background:var(--accent-gold);width:50%"></div></div>
-      <div class="gauge-labels"><span>Cheap</span><span>Fair · 17–24</span><span>Expensive</span></div>
-      <div class="gauge-stats">
-        <div class="gs-item"><strong>21.0×</strong>20Y avg</div>
-        <div class="gs-item"><strong>21.4×</strong>median</div>
-        <div class="gs-item"><strong>32×</strong>2021 peak*</div>
-        <div class="gs-item"><strong>12.7×</strong>2008 low</div>
-      </div>
-    </div>
-
   </div>
 
-  <div class="nifty-note">
-    ⚠ Nifty 50 note: NSE switched from standalone to consolidated earnings in April 2021. Pre-2021 data is standalone basis — not directly comparable to today's consolidated figures. The 2021 peak on standalone basis reached ~40×.
-  </div>
-
-  <div class="section-hdr" style="margin-top:8px;"><h2>Reference bands</h2><span class="section-sub">where valuation zones are drawn</span></div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
-    <div class="chart-card" style="padding:18px;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">CSPX · S&amp;P 500 historical P/E</div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Cheap zone</span><span style="color:var(--accent-blue)">≤ 14×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Fair value</span><span style="color:var(--accent-teal)">14 – 22×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Elevated</span><span style="color:var(--accent-amber)">22 – 28×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Expensive</span><span style="color:var(--accent-coral)">≥ 28×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0"><span style="color:var(--text3)">Current</span><span style="color:var(--text)" id="ref-cspx">27.89×</span></div>
+  <div class="section">
+    <div class="section-hdr"><span class="section-title">Valuation zone reference</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
+      <div class="card" style="padding:18px;">
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;">CSPX · S&amp;P 500</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Cheap</span><span class="zone z-cheap" style="font-size:10px">≤ 14×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Fair value</span><span class="zone z-fair" style="font-size:10px">14 – 22×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Elevated</span><span class="zone z-elevated" style="font-size:10px">22 – 28×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Expensive</span><span class="zone z-expensive" style="font-size:10px">≥ 28×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;"><span style="color:var(--text3)">Current</span><span style="font-family:var(--mono)" id="ref-cspx">27.89×</span></div>
+        </div>
       </div>
-    </div>
-    <div class="chart-card" style="padding:18px;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">VWRA · FTSE All-World historical P/E</div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Cheap zone</span><span style="color:var(--accent-blue)">≤ 12×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Fair value</span><span style="color:var(--accent-teal)">12 – 18×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Elevated</span><span style="color:var(--accent-amber)">18 – 23×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Expensive</span><span style="color:var(--accent-coral)">≥ 23×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0"><span style="color:var(--text3)">Current</span><span style="color:var(--text)" id="ref-vwra">21.04×</span></div>
+      <div class="card" style="padding:18px;">
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;">VWRA · FTSE All-World</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Cheap</span><span class="zone z-cheap" style="font-size:10px">≤ 12×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Fair value</span><span class="zone z-fair" style="font-size:10px">12 – 18×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Elevated</span><span class="zone z-elevated" style="font-size:10px">18 – 23×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Expensive</span><span class="zone z-expensive" style="font-size:10px">≥ 23×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;"><span style="color:var(--text3)">Current</span><span style="font-family:var(--mono)" id="ref-vwra">21.04×</span></div>
+        </div>
       </div>
-    </div>
-    <div class="chart-card" style="padding:18px;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Nifty 50 historical P/E (consolidated)</div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Cheap zone (−1SD)</span><span style="color:var(--accent-blue)">≤ 17×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Fairly valued</span><span style="color:var(--accent-teal)">17 – 24×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Caution (+1SD)</span><span style="color:var(--accent-amber)">24 – 28×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Danger zone (+2SD)</span><span style="color:var(--accent-coral)">≥ 28×</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0"><span style="color:var(--text3)">Current</span><span style="color:var(--text)" id="ref-nifty">20.23×</span></div>
+      <div class="card" style="padding:18px;">
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;">Nifty 50 · NSE India</div>
+        <div style="display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Undervalued (−1SD)</span><span class="zone z-cheap" style="font-size:10px">≤ 17×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Fairly valued</span><span class="zone z-fair" style="font-size:10px">17 – 24×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Caution (+1SD)</span><span class="zone z-elevated" style="font-size:10px">24 – 28×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--text2)">Danger (+2SD)</span><span class="zone z-expensive" style="font-size:10px">≥ 28×</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;"><span style="color:var(--text3)">Current</span><span style="font-family:var(--mono)" id="ref-nifty">20.23×</span></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════ CHARTS PAGE ══════════════ -->
+<!-- CHARTS -->
 <div class="page" id="page-charts">
+  <div class="page-title"><h1>Historical P/E charts</h1><p>Full historical series — use range buttons to zoom</p></div>
 
-  <!-- CSPX Chart -->
   <div class="chart-card">
-    <div class="chart-controls">
-      <div>
-        <div class="chart-title">CSPX · S&amp;P 500 P/E ratio — historical</div>
-        <div class="chart-sub">Trailing twelve months (TTM) · iShares Core S&amp;P 500 UCITS ETF</div>
-      </div>
-      <div class="range-group">
-        <button class="range-btn on" onclick="setChartRange('cspx',5,this)">5Y</button>
-        <button class="range-btn" onclick="setChartRange('cspx',10,this)">10Y</button>
-        <button class="range-btn" onclick="setChartRange('cspx',20,this)">20Y</button>
-        <button class="range-btn" onclick="setChartRange('cspx',999,this)">All</button>
+    <div class="chart-header">
+      <div><div class="chart-title">CSPX · S&amp;P 500 P/E ratio</div><div class="chart-sub">Trailing 12 months (TTM) · annual Jan 1 readings</div></div>
+      <div class="range-row">
+        <button class="rb on" onclick="setRange('cspx',5,this)">5Y</button>
+        <button class="rb" onclick="setRange('cspx',10,this)">10Y</button>
+        <button class="rb" onclick="setRange('cspx',20,this)">20Y</button>
+        <button class="rb" onclick="setRange('cspx',999,this)">All</button>
       </div>
     </div>
-    <div class="legend-row">
-      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-blue)"></span>CSPX P/E</span>
-      <span class="legend-item"><span class="legend-dashed" style="border-color:var(--text3)"></span>25Y avg (21.4×)</span>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--blue)"></span>CSPX P/E</span>
+      <span class="li"><span class="ld-dash" style="border-color:var(--text3)"></span>25Y average (21.4×)</span>
     </div>
-    <div class="chart-wrap" style="height:260px"><canvas id="chart-cspx"></canvas></div>
-    <p class="chart-note">Source: S&amp;P 500 TTM P/E, multpl.com. 2009 excluded (earnings distorted post-GFC). CSPX tracks S&amp;P 500 — its P/E is functionally identical to the index P/E.</p>
+    <div class="chart-wrap" style="height:240px"><canvas id="ch-cspx"></canvas></div>
+    <p class="chart-note">Source: multpl.com · 2009 excluded (post-GFC earnings distortion, P/E spiked to 70.91×)</p>
   </div>
 
-  <!-- VWRA Chart -->
   <div class="chart-card">
-    <div class="chart-controls">
-      <div>
-        <div class="chart-title">VWRA · FTSE All-World P/E ratio — historical</div>
-        <div class="chart-sub">Trailing twelve months (TTM) · Vanguard FTSE All-World UCITS ETF</div>
-      </div>
-      <div class="range-group">
-        <button class="range-btn on" onclick="setChartRange('vwra',5,this)">5Y</button>
-        <button class="range-btn" onclick="setChartRange('vwra',10,this)">10Y</button>
-        <button class="range-btn" onclick="setChartRange('vwra',20,this)">20Y</button>
-        <button class="range-btn" onclick="setChartRange('vwra',999,this)">All</button>
+    <div class="chart-header">
+      <div><div class="chart-title">VWRA · FTSE All-World P/E ratio</div><div class="chart-sub">Trailing 12 months (TTM) · VT ETF proxy</div></div>
+      <div class="range-row">
+        <button class="rb on" onclick="setRange('vwra',5,this)">5Y</button>
+        <button class="rb" onclick="setRange('vwra',10,this)">10Y</button>
+        <button class="rb" onclick="setRange('vwra',20,this)">20Y</button>
+        <button class="rb" onclick="setRange('vwra',999,this)">All</button>
       </div>
     </div>
-    <div class="legend-row">
-      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-teal)"></span>VWRA P/E</span>
-      <span class="legend-item"><span class="legend-dashed" style="border-color:var(--text3)"></span>20Y avg (14.9×)</span>
-      <span class="legend-item"><span class="legend-dashed" style="border-color:var(--accent-teal);opacity:0.5"></span>5Y avg (18.6×)</span>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--green)"></span>VWRA P/E</span>
+      <span class="li"><span class="ld-dash" style="border-color:var(--text3)"></span>20Y average (14.9×)</span>
+      <span class="li"><span class="ld-dash" style="border-color:var(--green)"></span>5Y average (18.6×)</span>
     </div>
-    <div class="chart-wrap" style="height:260px"><canvas id="chart-vwra"></canvas></div>
-    <p class="chart-note">Source: FTSE All-World TTM P/E via worldperatio.com (VT ETF proxy). Pre-2015 data estimated from FTSE Russell index-level reports. Current reading: 21.04× as of 20 Mar 2026.</p>
+    <div class="chart-wrap" style="height:240px"><canvas id="ch-vwra"></canvas></div>
+    <p class="chart-note">Source: worldperatio.com · Pre-2015 estimated from FTSE Russell publications</p>
   </div>
 
-  <!-- NIFTY Chart -->
   <div class="chart-card">
-    <div class="chart-controls">
-      <div>
-        <div class="chart-title">Nifty 50 P/E ratio — historical</div>
-        <div class="chart-sub">Trailing twelve months (TTM) · NSE India · Consolidated earnings basis (post-Apr 2021)</div>
-      </div>
-      <div class="range-group">
-        <button class="range-btn on" onclick="setChartRange('nifty',5,this)">5Y</button>
-        <button class="range-btn" onclick="setChartRange('nifty',10,this)">10Y</button>
-        <button class="range-btn" onclick="setChartRange('nifty',20,this)">20Y</button>
-        <button class="range-btn" onclick="setChartRange('nifty',999,this)">All</button>
+    <div class="chart-header">
+      <div><div class="chart-title">Nifty 50 P/E ratio</div><div class="chart-sub">Consolidated basis (post Apr 2021) · Standalone basis (pre-2021)</div></div>
+      <div class="range-row">
+        <button class="rb on" onclick="setRange('nifty',5,this)">5Y</button>
+        <button class="rb" onclick="setRange('nifty',10,this)">10Y</button>
+        <button class="rb" onclick="setRange('nifty',20,this)">20Y</button>
+        <button class="rb" onclick="setRange('nifty',999,this)">All</button>
       </div>
     </div>
-    <div class="legend-row">
-      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-amber)"></span>Nifty 50 P/E</span>
-      <span class="legend-item"><span class="legend-dashed" style="border-color:var(--text3)"></span>20Y avg (21.0×)</span>
-      <span class="legend-item" style="font-size:10px;color:var(--text3)">▲ Pre-2021 = standalone basis</span>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--amber)"></span>Nifty 50 P/E</span>
+      <span class="li"><span class="ld-dash" style="border-color:var(--text3)"></span>20Y average (21.0×)</span>
+      <span class="li" style="font-size:11px;color:var(--text3)">⚑ Apr 2021: standalone → consolidated earnings</span>
     </div>
-    <div class="chart-wrap" style="height:260px"><canvas id="chart-nifty"></canvas></div>
-    <p class="chart-note">Source: NSE India historical P/E data, nifty-pe-ratio.com, bajajamc.com. NSE switched to consolidated earnings Apr 2021 — a discontinuity in the series. Standalone pre-2021 values are ~25% higher than equivalent consolidated readings.</p>
+    <div class="chart-wrap" style="height:240px"><canvas id="ch-nifty"></canvas></div>
+    <p class="chart-note">Source: NSE India · nifty-pe-ratio.com · Pre-2021 standalone figures are ~20–25% higher than equivalent consolidated readings</p>
   </div>
-
 </div>
 
-<!-- ══════════════ DATA TABLE PAGE ══════════════ -->
+<!-- FED MODEL -->
+<div class="page" id="page-fedmodel">
+  <div class="page-title">
+    <h1>Fed Model — earnings yield vs bond yield</h1>
+    <p>Are equities cheap or expensive relative to bonds? A rate-adjusted valuation lens.</p>
+  </div>
+
+  <div class="info-panel">
+    <strong>What is the Fed Model?</strong> It compares the earnings yield of equities (= 1 ÷ P/E, expressed as a %) to the 10-year government bond yield. The gap is the Equity Risk Premium (ERP). A positive ERP means equities offer extra return over bonds. A negative ERP — like the US shows today — means government bonds offer comparable or better return for significantly less risk.
+  </div>
+
+  <div class="fed-grid">
+    <div class="fed-card">
+      <div class="fed-label">CSPX earnings yield <span class="tip-wrap"><span class="tip-icon">?</span><span class="tip-box">Earnings yield = 1 ÷ P/E × 100. A P/E of 27.89 means the market earns 3.58¢ per $1 invested per year at current earnings. Think of it as the "interest rate" equities pay.</span></span></div>
+      <div class="fed-val" id="fm-cspx-ey">3.58%</div>
+      <div class="fed-sub">1 ÷ <span id="fm-cspx-pe">27.89</span> × 100</div>
+    </div>
+    <div class="fed-card">
+      <div class="fed-label">US 10Y Treasury yield <span class="tip-wrap"><span class="tip-icon">?</span><span class="tip-box">The risk-free rate. If a US Treasury bond pays 4.39% with zero default risk, equities must offer meaningfully more to justify the added volatility and uncertainty.</span></span></div>
+      <div class="fed-val" id="fm-us-yield">4.39%</div>
+      <div class="fed-sub">US Treasury 10Y · Mar 2026</div>
+    </div>
+    <div class="fed-card">
+      <div class="fed-label">S&amp;P 500 equity risk premium <span class="tip-wrap"><span class="tip-icon">?</span><span class="tip-box">ERP = Earnings Yield − Bond Yield. Historical US average is +2% to +3%. Today's negative ERP is unusual and suggests equities are not offering adequate compensation vs bonds.</span></span></div>
+      <div class="fed-val" id="fm-us-erp">−0.81%</div>
+      <div class="fed-sub" id="fm-us-signal">Equities expensive vs bonds</div>
+    </div>
+    <div class="fed-card">
+      <div class="fed-label">VWRA earnings yield</div>
+      <div class="fed-val" id="fm-vwra-ey">4.75%</div>
+      <div class="fed-sub">1 ÷ <span id="fm-vwra-pe">21.04</span> × 100</div>
+    </div>
+    <div class="fed-card">
+      <div class="fed-label">VWRA equity risk premium <span class="tip-wrap"><span class="tip-icon">?</span><span class="tip-box">VWRA's earnings yield vs the US 10Y bond. VWRA holds non-US assets earning in other currencies — treat this as a rough comparison, not a precise arbitrage.</span></span></div>
+      <div class="fed-val" id="fm-vwra-erp">+0.36%</div>
+      <div class="fed-sub" id="fm-vwra-signal">Marginally attractive vs bonds</div>
+    </div>
+    <div class="fed-card">
+      <div class="fed-label">Nifty earnings yield</div>
+      <div class="fed-val" id="fm-nifty-ey">4.94%</div>
+      <div class="fed-sub">1 ÷ <span id="fm-nifty-pe">20.23</span> × 100</div>
+    </div>
+    <div class="fed-card">
+      <div class="fed-label">India 10Y G-Sec yield <span class="tip-wrap"><span class="tip-icon">?</span><span class="tip-box">India's government bond risk-free rate. Nifty ERP is compared against the Indian bond yield for a like-for-like comparison for INR investors.</span></span></div>
+      <div class="fed-val" id="fm-india-yield">6.76%</div>
+      <div class="fed-sub">RBI G-Sec 10Y · Mar 2026</div>
+    </div>
+    <div class="fed-card">
+      <div class="fed-label">Nifty equity risk premium</div>
+      <div class="fed-val" id="fm-india-erp">−1.82%</div>
+      <div class="fed-sub" id="fm-india-signal">Nifty expensive vs G-Sec</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Equity risk premium — historical
+          <span class="tip-wrap"><span class="tip-icon">?</span><span class="tip-box">When ERP > 0 (above the dashed zero line), equities historically looked attractive vs bonds. When ERP < 0, bonds were competing with equities on yield.</span></span>
+        </div>
+        <div class="chart-sub">Earnings yield minus 10Y government bond yield</div>
+      </div>
+      <div class="range-row">
+        <button class="rb on" onclick="setERPRange(10,this)">10Y</button>
+        <button class="rb" onclick="setERPRange(20,this)">20Y</button>
+        <button class="rb" onclick="setERPRange(999,this)">All</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--blue)"></span>S&P 500 ERP (vs US 10Y)</span>
+      <span class="li"><span class="ld" style="background:var(--amber)"></span>Nifty ERP (vs India 10Y)</span>
+      <span class="li"><span class="ld-dash" style="border-color:var(--text3)"></span>Zero line</span>
+    </div>
+    <div class="chart-wrap" style="height:260px"><canvas id="ch-erp"></canvas></div>
+    <p class="chart-note">Negative ERP for the S&P 500 is rare — it last occurred persistently during the dot-com era (late 1990s) and briefly in 2007. The current reading suggests bonds are competitive with equities on a yield basis for the first time in over a decade.</p>
+  </div>
+
+  <div class="info-panel blue" style="margin-top:16px;">
+    <strong>Caveat:</strong> The Fed Model is contested. Critics note that comparing nominal bond yields to real (inflation-adjusted) equity earnings yields conflates different quantities. During high-inflation periods, high bond yields may not make bonds "better" investments. Use ERP as one signal among many.
+  </div>
+</div>
+
+<!-- DATA TABLE -->
 <div class="page" id="page-data">
-  <div class="nifty-note" style="margin-bottom:20px;">
-    ⚠ Nifty 50 data pre-2021 is on standalone earnings basis; post-2021 is consolidated. The switch caused an apparent drop from ~40× to ~32× in Apr 2021 — not a real valuation change. Cross-era comparisons should account for ~20–25% adjustment.
+  <div class="page-title"><h1>Annual P/E data table</h1><p>Year-by-year readings with valuation zones and CSPX−VWRA spread</p></div>
+  <div class="info-panel">
+    <strong>Nifty standalone vs consolidated:</strong> NSE India switched from standalone to consolidated earnings in April 2021. Standalone figures are ~20–25% higher, so the series is not directly comparable across 2021. Pre-2021 Nifty data is marked accordingly.
   </div>
-  <div class="section-hdr"><h2>Annual P/E data table</h2><span class="section-sub">year-end or year-start reading</span></div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Year</th>
-          <th class="td-num">CSPX / S&amp;P 500</th>
-          <th>Zone</th>
-          <th class="td-num">VWRA / All-World</th>
-          <th>Zone</th>
-          <th class="td-num">Nifty 50</th>
-          <th>Zone</th>
-          <th class="td-num">Spread (C−V)</th>
-        </tr>
-      </thead>
-      <tbody id="data-tbody"></tbody>
-    </table>
+  <div class="tbl-wrap">
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th class="tr">CSPX / S&P 500</th><th>Zone</th>
+            <th class="tr">VWRA / All-World</th><th>Zone</th>
+            <th class="tr">Nifty 50</th><th>Zone</th>
+            <th class="tr">Spread (C−V)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
-  <p style="font-size:10px;color:var(--text3);margin-top:12px;line-height:1.6;">
-    CSPX: S&amp;P 500 TTM P/E at Jan 1 reading (multpl.com). VWRA: FTSE All-World TTM P/E (worldperatio.com). Nifty 50: Annual average P/E (NSE/nifty-pe-ratio.com). Spread = CSPX minus VWRA. Years with S&amp;P 500 P/E &gt;60 (GFC earnings distortion, 2009) excluded from CSPX column.
-  </p>
+  <p style="font-size:11px;color:var(--text3);margin-top:10px;font-family:var(--mono);line-height:1.7;">Sources: multpl.com (S&P 500) · worldperatio.com (All-World) · nifty-pe-ratio.com / NSE India (Nifty). Annual Jan 1 or year-average readings. Spread = CSPX minus VWRA.</p>
 </div>
 
-<!-- ══════════════ COMPARE PAGE ══════════════ -->
-<div class="page" id="page-compare">
+<!-- METHODOLOGY -->
+<div class="page" id="page-methodology">
+  <div class="page-title"><h1>Methodology &amp; sources</h1><p>How the numbers are calculated, what the data means, and where it comes from.</p></div>
 
-  <div class="section-hdr"><h2>Three-way comparison</h2><span class="section-sub">CSPX vs VWRA vs Nifty 50</span></div>
+  <div class="method-section">
+    <h2>What is a P/E ratio?</h2>
+    <p>The Price-to-Earnings ratio divides a market's total capitalisation by its total earnings. A P/E of 25× means investors pay $25 for every $1 of annual earnings. All P/Es here are <strong>trailing twelve-month (TTM)</strong> — based on the last 12 months of actual reported earnings, not analyst forecasts. TTM is more conservative than forward P/E.</p>
+  </div>
+  <hr class="divider">
 
-  <div class="compare-grid">
-    <div class="stat-card">
-      <div class="stat-label">CSPX current</div>
-      <div class="stat-value" id="cmp-cspx">27.89×</div>
-      <div class="stat-sub">S&amp;P 500 TTM P/E</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">VWRA current</div>
-      <div class="stat-value" id="cmp-vwra">21.04×</div>
-      <div class="stat-sub">All-World TTM P/E</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Nifty 50 current</div>
-      <div class="stat-value" id="cmp-nifty">20.23×</div>
-      <div class="stat-sub">Consolidated TTM P/E</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">CSPX vs VWRA spread</div>
-      <div class="stat-value" id="cmp-cv">+6.85</div>
-      <div class="stat-sub">CSPX premium over VWRA</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">CSPX vs Nifty spread</div>
-      <div class="stat-value" id="cmp-cn">+7.66</div>
-      <div class="stat-sub">CSPX premium over Nifty</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">VWRA vs Nifty spread</div>
-      <div class="stat-value" id="cmp-vn">+0.81</div>
-      <div class="stat-sub">VWRA premium over Nifty</div>
+  <div class="method-section">
+    <h2>How valuation zones are set</h2>
+    <p>Zones are based on historical standard deviation bands over each index's full data history:</p>
+    <ul>
+      <li><strong>Cheap / Undervalued:</strong> P/E below mean − 1 standard deviation</li>
+      <li><strong>Fair value:</strong> P/E within ±1 SD of the long-run mean</li>
+      <li><strong>Elevated / Caution:</strong> P/E between mean + 1SD and mean + 2SD</li>
+      <li><strong>Expensive / Danger:</strong> P/E above mean + 2SD</li>
+    </ul>
+    <p>The Nifty 50 zones follow <a href="https://nifty-pe-ratio.com" target="_blank">nifty-pe-ratio.com</a>'s published framework built on 25+ years of NSE data. <strong>Limitation:</strong> A higher P/E is mathematically justifiable when interest rates are near zero. The Fed Model page accounts for this context.</p>
+  </div>
+  <hr class="divider">
+
+  <div class="method-section">
+    <h2>Fed Model &amp; Equity Risk Premium</h2>
+    <p>The Fed Model compares the <strong>earnings yield</strong> (1 ÷ P/E, as a %) to the 10-year government bond yield. The Equity Risk Premium (ERP) = Earnings Yield − Bond Yield.</p>
+    <ul>
+      <li>Positive ERP → equities offer more return than bonds — historically a constructive signal</li>
+      <li>Negative ERP → bonds offer comparable or better yield for lower risk — a caution signal</li>
+      <li>Historical US average ERP: approximately +2% to +3%</li>
+    </ul>
+    <p>Today: CSPX earnings yield ≈ 3.58%, US 10Y ≈ 4.39% → ERP ≈ −0.81%. Nifty earnings yield ≈ 4.94%, India 10Y ≈ 6.76% → ERP ≈ −1.82%.</p>
+    <p><strong>Caveat:</strong> The Fed Model is contested in academic literature. It conflates nominal bond yields with real earnings yields, which can be misleading in high-inflation periods.</p>
+  </div>
+  <hr class="divider">
+
+  <div class="method-section">
+    <h2>Nifty 50 — standalone vs consolidated earnings</h2>
+    <p>NSE India changed its earnings basis in April 2021 from standalone (parent company only) to consolidated (including subsidiary profits). Consolidated earnings are ~20–25% higher, so the P/E ratio fell from ~40× to ~32× overnight — not because the market got cheaper. Pre-2021 data in this dashboard uses the original standalone figures as published by NSE.</p>
+  </div>
+  <hr class="divider">
+
+  <div class="method-section">
+    <h2>Data sources</h2>
+    <div style="margin-top:8px;">
+      <a class="source-chip" href="https://www.multpl.com/s-p-500-pe-ratio/table/by-year" target="_blank">↗ multpl.com — S&P 500 P/E history</a>
+      <a class="source-chip" href="https://worldperatio.com/area/all-world/" target="_blank">↗ worldperatio.com — All-World P/E</a>
+      <a class="source-chip" href="https://nifty-pe-ratio.com" target="_blank">↗ nifty-pe-ratio.com — Nifty 50 P/E</a>
+      <a class="source-chip" href="https://fred.stlouisfed.org/series/DGS10" target="_blank">↗ FRED — US 10Y Treasury</a>
+      <a class="source-chip" href="https://tradingeconomics.com/india/government-bond-yield" target="_blank">↗ TradingEconomics — India 10Y G-Sec</a>
+      <a class="source-chip" href="https://www.nseindia.com/products-services/indices-pe-pb-div-yield-indices" target="_blank">↗ NSE India — official P/E data</a>
     </div>
   </div>
+  <hr class="divider">
 
-  <div class="chart-card">
-    <div class="chart-controls">
-      <div>
-        <div class="chart-title">Side-by-side P/E comparison</div>
-        <div class="chart-sub">Grouped bar chart — annual data</div>
-      </div>
-      <div class="range-group">
-        <button class="range-btn on" onclick="setCmpRange(5,this)">5Y</button>
-        <button class="range-btn" onclick="setCmpRange(10,this)">10Y</button>
-        <button class="range-btn" onclick="setCmpRange(20,this)">20Y</button>
-      </div>
-    </div>
-    <div class="legend-row">
-      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-blue)"></span>CSPX</span>
-      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-teal)"></span>VWRA</span>
-      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-amber)"></span>Nifty 50</span>
-    </div>
-    <div class="chart-wrap" style="height:300px"><canvas id="chart-compare"></canvas></div>
+  <div class="method-section">
+    <h2>Disclaimer</h2>
+    <p>This dashboard is for <strong>informational purposes only</strong> and does not constitute financial advice. Historical valuation patterns do not guarantee future returns. Always consult a qualified financial advisor before making investment decisions.</p>
   </div>
-
-  <div class="chart-card" style="margin-top:16px;">
-    <div class="chart-controls">
-      <div>
-        <div class="chart-title">P/E spread — CSPX premium over VWRA &amp; Nifty</div>
-        <div class="chart-sub">Positive = CSPX trades at a higher multiple</div>
-      </div>
-    </div>
-    <div class="legend-row">
-      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-blue)"></span>CSPX − VWRA</span>
-      <span class="legend-item"><span class="legend-dot" style="background:var(--accent-coral)"></span>CSPX − Nifty</span>
-    </div>
-    <div class="chart-wrap" style="height:200px"><canvas id="chart-spread"></canvas></div>
-    <p class="chart-note">A wider spread means US equities (CSPX) trade at a larger premium vs global / Indian peers — potentially signalling relative value in VWRA or Nifty-tracking funds. Last 10 years shown.</p>
-  </div>
-
 </div>
 
 <footer>
   <div>
-    <p>◈ valuation.watch — global P/E ratio tracker</p>
-    <p>Data sources: <a href="https://www.multpl.com" target="_blank">multpl.com</a> (S&amp;P 500) · <a href="https://worldperatio.com" target="_blank">worldperatio.com</a> (All-World) · <a href="https://nifty-pe-ratio.com" target="_blank">nifty-pe-ratio.com</a> &amp; NSE India (Nifty 50). For informational purposes only. Not financial advice.</p>
+    <p>PE Ratio Dashboard · CSPX · VWRA · Nifty 50</p>
+    <p><a href="https://www.multpl.com" target="_blank">multpl.com</a> · <a href="https://worldperatio.com" target="_blank">worldperatio.com</a> · <a href="https://nifty-pe-ratio.com" target="_blank">nifty-pe-ratio.com</a> · <a href="https://fred.stlouisfed.org" target="_blank">FRED</a> · <a href="https://tradingeconomics.com" target="_blank">TradingEconomics</a></p>
+    <p style="margin-top:4px;color:var(--text3)">For informational use only. Not financial advice.</p>
   </div>
-  <p style="color:var(--text3);font-size:10px;">Updated: <span id="footer-date">22 Mar 2026</span></p>
+  <p>Updated <span id="footer-date">22 Mar 2026</span></p>
 </footer>
 
 <script>
-// ════════════════ DATA ════════════════
-const DATA = [
-  // {y, cspx, vwra, nifty}  — nifty: pre-2021 standalone, 2021+ consolidated
-  {y:2026, cspx:27.89, vwra:21.04, nifty:20.23},
-  {y:2025, cspx:28.16, vwra:21.34, nifty:22.40},
-  {y:2024, cspx:25.01, vwra:19.80, nifty:22.70},
-  {y:2023, cspx:22.82, vwra:17.90, nifty:22.20},
-  {y:2022, cspx:23.11, vwra:14.50, nifty:23.70},
-  {y:2021, cspx:35.96, vwra:24.20, nifty:32.10}, // nifty: consolidated from Apr
-  {y:2020, cspx:24.88, vwra:18.30, nifty:37.30}, // standalone — COVID spike
-  {y:2019, cspx:19.60, vwra:15.20, nifty:24.60},
-  {y:2018, cspx:24.97, vwra:16.80, nifty:26.50},
-  {y:2017, cspx:23.59, vwra:17.50, nifty:23.40},
-  {y:2016, cspx:22.18, vwra:16.10, nifty:22.10},
-  {y:2015, cspx:20.02, vwra:15.40, nifty:22.60},
-  {y:2014, cspx:18.15, vwra:14.90, nifty:20.70},
-  {y:2013, cspx:17.03, vwra:13.80, nifty:17.50},
-  {y:2012, cspx:14.87, vwra:12.20, nifty:17.60},
-  {y:2011, cspx:16.30, vwra:12.80, nifty:18.70},
-  {y:2010, cspx:20.70, vwra:15.60, nifty:22.40},
-  {y:2008, cspx:21.46, vwra:13.90, nifty:12.70},
-  {y:2007, cspx:17.36, vwra:15.20, nifty:26.50},
-  {y:2006, cspx:18.07, vwra:15.80, nifty:20.90},
-  {y:2005, cspx:19.99, vwra:16.20, nifty:17.70},
-  {y:2004, cspx:22.73, vwra:18.10, nifty:16.00},
-  {y:2001, cspx:27.55, vwra:20.40, nifty:15.60},
-  {y:2000, cspx:29.04, vwra:21.50, nifty:19.60},
-  {y:1999, cspx:32.92, vwra:23.00, nifty:null},
-  {y:1998, cspx:24.29, vwra:17.40, nifty:null},
-  {y:1997, cspx:19.53, vwra:15.10, nifty:null},
-  {y:1996, cspx:18.08, vwra:14.30, nifty:null},
-  {y:1995, cspx:14.89, vwra:12.40, nifty:null},
+const D = [
+  {y:2026,c:27.89,v:21.04,n:20.23,ub:4.39,ib:6.76},
+  {y:2025,c:28.16,v:21.34,n:22.40,ub:4.25,ib:6.85},
+  {y:2024,c:25.01,v:19.80,n:22.70,ub:4.00,ib:7.10},
+  {y:2023,c:22.82,v:17.90,n:22.20,ub:3.88,ib:7.35},
+  {y:2022,c:23.11,v:14.50,n:23.70,ub:1.52,ib:6.83},
+  {y:2021,c:35.96,v:24.20,n:32.10,ub:0.93,ib:6.22},
+  {y:2020,c:24.88,v:18.30,n:37.30,ub:0.68,ib:5.97},
+  {y:2019,c:19.60,v:15.20,n:24.60,ub:2.14,ib:6.52},
+  {y:2018,c:24.97,v:16.80,n:26.50,ub:2.41,ib:7.17},
+  {y:2017,c:23.59,v:17.50,n:23.40,ub:2.45,ib:6.41},
+  {y:2016,c:22.18,v:16.10,n:22.10,ub:1.84,ib:6.57},
+  {y:2015,c:20.02,v:15.40,n:22.60,ub:2.17,ib:7.73},
+  {y:2014,c:18.15,v:14.90,n:20.70,ub:3.03,ib:8.51},
+  {y:2013,c:17.03,v:13.80,n:17.50,ub:1.76,ib:7.89},
+  {y:2012,c:14.87,v:12.20,n:17.60,ub:1.89,ib:8.20},
+  {y:2011,c:16.30,v:12.80,n:18.70,ub:2.78,ib:8.53},
+  {y:2010,c:20.70,v:15.60,n:22.40,ub:3.22,ib:7.90},
+  {y:2008,c:21.46,v:13.90,n:12.70,ub:3.66,ib:7.93},
+  {y:2007,c:17.36,v:15.20,n:26.50,ub:4.63,ib:7.81},
+  {y:2006,c:18.07,v:15.80,n:20.90,ub:4.71,ib:7.59},
+  {y:2005,c:19.99,v:16.20,n:17.70,ub:4.29,ib:7.12},
+  {y:2004,c:22.73,v:18.10,n:16.00,ub:4.27,ib:6.88},
+  {y:2001,c:27.55,v:20.40,n:15.60,ub:5.02,ib:9.11},
+  {y:2000,c:29.04,v:21.50,n:19.60,ub:6.03,ib:10.50},
+  {y:1999,c:32.92,v:23.00,n:null,ub:5.65,ib:null},
+  {y:1998,c:24.29,v:17.40,n:null,ub:5.26,ib:null},
+  {y:1997,c:19.53,v:15.10,n:null,ub:6.35,ib:null},
+  {y:1996,c:18.08,v:14.30,n:null,ub:6.44,ib:null},
+  {y:1995,c:14.89,v:12.40,n:null,ub:5.58,ib:null},
 ];
 
-const AVG_SP500 = 21.4, AVG_AW = 14.9, AVG_NIFTY = 21.0;
-
-let live = { cspx: 27.89, vwra: 21.04, nifty: 20.23 };
-
-// chart instances
+let live = {c:27.89,v:21.04,n:20.23,ub:4.39,ib:6.76};
+const AVG = {c:21.4,v:14.9,n:21.0};
 const charts = {};
+const ranges = {cspx:5,vwra:5,nifty:5};
+let erpRange = 10;
 
-// ════════════════ CLASSIFY ════════════════
-function classifyCSPX(pe) {
-  if (pe <= 14) return ['Cheap', 'z-cheap'];
-  if (pe <= 22) return ['Fair value', 'z-fair'];
-  if (pe <= 28) return ['Elevated', 'z-elevated'];
-  return ['Expensive', 'z-expensive'];
+function zone(key,pe) {
+  const cfg = {
+    c:{b:[14,22,28],l:['Cheap','Fair value','Elevated','Expensive'],z:['z-cheap','z-fair','z-elevated','z-expensive']},
+    v:{b:[12,18,23],l:['Cheap','Fair value','Elevated','Expensive'],z:['z-cheap','z-fair','z-elevated','z-expensive']},
+    n:{b:[17,24,28],l:['Undervalued','Fairly Valued','Caution','Danger'],z:['z-cheap','z-fair','z-elevated','z-expensive']},
+  }[key];
+  for(let i=0;i<cfg.b.length;i++) if(pe<cfg.b[i]) return {l:cfg.l[i],z:cfg.z[i]};
+  return {l:cfg.l[cfg.l.length-1],z:cfg.z[cfg.z.length-1]};
 }
-function classifyVWRA(pe) {
-  if (pe <= 12) return ['Cheap', 'z-cheap'];
-  if (pe <= 18) return ['Fair value', 'z-fair'];
-  if (pe <= 23) return ['Overvalued', 'z-elevated'];
-  return ['Expensive', 'z-expensive'];
-}
-function classifyNifty(pe) {
-  if (pe <= 17) return ['Undervalued', 'z-cheap'];
-  if (pe <= 24) return ['Fairly Valued', 'z-fair'];
-  if (pe <= 28) return ['Caution', 'z-elevated'];
-  return ['Danger zone', 'z-expensive'];
-}
-function gaugeW(pe, min, max) {
-  return Math.min(Math.max((pe - min) / (max - min) * 100, 4), 96).toFixed(1);
-}
-function gaugeColor(cls) {
-  if (cls === 'z-cheap') return 'var(--accent-blue)';
-  if (cls === 'z-fair') return 'var(--accent-teal)';
-  if (cls === 'z-elevated') return 'var(--accent-amber)';
-  return 'var(--accent-coral)';
-}
+function gcol(z) { return {'z-cheap':'var(--blue)','z-fair':'var(--green)','z-elevated':'var(--amber)','z-expensive':'var(--red)'}[z]; }
+function gw(pe,mn,mx) { return Math.min(Math.max((pe-mn)/(mx-mn)*100,3),97).toFixed(1); }
 
-// ════════════════ UPDATE UI ════════════════
-function updateUI() {
-  const c = live.cspx, v = live.vwra, n = live.nifty;
-  const now = new Date();
-  const ds = now.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
-  document.getElementById('hdr-date').textContent = ds;
-  document.getElementById('footer-date').textContent = ds;
+function upd() {
+  const {c,v,n,ub,ib} = live;
+  const dt = new Date().toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('hdr-date').textContent = dt;
+  document.getElementById('footer-date').textContent = dt;
 
-  // overview cards
-  document.getElementById('cspx-pe-big').textContent = c.toFixed(2);
-  document.getElementById('vwra-pe-big').textContent = v.toFixed(2);
-  document.getElementById('nifty-pe-big').textContent = n.toFixed(2);
+  [['c','cspx'],['v','vwra'],['n','nifty']].forEach(([k,id])=>{
+    const val=k==='c'?c:k==='v'?v:n;
+    document.getElementById('v-'+id).textContent=val.toFixed(2);
+    const z=zone(k,val);
+    const el=document.getElementById('z-'+id); el.textContent=z.l; el.className='zone '+z.z;
+    const p=Math.round(((val-AVG[k])/AVG[k])*100);
+    document.getElementById('pct-'+id).textContent=(p>=0?'+':'')+p+'%';
+    document.getElementById('ref-'+id).textContent=val.toFixed(2)+'×';
+  });
 
-  const [czl, czc] = classifyCSPX(c);
-  const [vzl, vzc] = classifyVWRA(v);
-  const [nzl, nzc] = classifyNifty(n);
+  [['c','cspx',10,42],['v','vwra',10,30],['n','nifty',10,38]].forEach(([k,id,mn,mx])=>{
+    const val=k==='c'?c:k==='v'?v:n;
+    const z=zone(k,val);
+    document.getElementById('gv-'+id).textContent=val.toFixed(2)+'×';
+    const gz=document.getElementById('gz-'+id); gz.textContent=z.l; gz.className='zone '+z.z;
+    const gf=document.getElementById('gf-'+id);
+    gf.style.width=gw(val,mn,mx)+'%'; gf.style.background=gcol(z.z);
+  });
 
-  function setBadge(id, lbl, cls) {
-    const el = document.getElementById(id);
-    el.textContent = lbl; el.className = 'zone-badge ' + cls;
-  }
-  setBadge('cspx-zone', czl, czc);
-  setBadge('vwra-zone', vzl, vzc);
-  setBadge('nifty-zone', nzl, nzc);
-
-  document.getElementById('cspx-vs-avg').textContent = ((c-AVG_SP500)/AVG_SP500*100).toFixed(0) > 0 ? '+'+((c-AVG_SP500)/AVG_SP500*100).toFixed(0)+'%' : ((c-AVG_SP500)/AVG_SP500*100).toFixed(0)+'%';
-  document.getElementById('vwra-vs-avg').textContent = ((v-AVG_AW)/AVG_AW*100).toFixed(0) > 0 ? '+'+((v-AVG_AW)/AVG_AW*100).toFixed(0)+'%' : ((v-AVG_AW)/AVG_AW*100).toFixed(0)+'%';
-  document.getElementById('nifty-vs-avg').textContent = ((n-AVG_NIFTY)/AVG_NIFTY*100).toFixed(0) > 0 ? '+'+((n-AVG_NIFTY)/AVG_NIFTY*100).toFixed(0)+'%' : ((n-AVG_NIFTY)/AVG_NIFTY*100).toFixed(0)+'%';
-
-  // gauges
-  document.getElementById('g-cspx-val').textContent = c.toFixed(2)+'×';
-  document.getElementById('g-vwra-val').textContent = v.toFixed(2)+'×';
-  document.getElementById('g-nifty-val').textContent = n.toFixed(2)+'×';
-  setBadge('g-cspx-z', czl, czc);
-  setBadge('g-vwra-z', vzl, vzc);
-  setBadge('g-nifty-z', nzl, nzc);
-  const gfc = document.getElementById('gf-cspx');
-  gfc.style.width = gaugeW(c,10,40)+'%'; gfc.style.background = gaugeColor(czc);
-  const gfv = document.getElementById('gf-vwra');
-  gfv.style.width = gaugeW(v,10,30)+'%'; gfv.style.background = gaugeColor(vzc);
-  const gfn = document.getElementById('gf-nifty');
-  gfn.style.width = gaugeW(n,10,35)+'%'; gfn.style.background = gaugeColor(nzc);
-
-  // reference bands
-  document.getElementById('ref-cspx').textContent = c.toFixed(2)+'×';
-  document.getElementById('ref-vwra').textContent = v.toFixed(2)+'×';
-  document.getElementById('ref-nifty').textContent = n.toFixed(2)+'×';
-
-  // compare page
-  document.getElementById('cmp-cspx').textContent = c.toFixed(2)+'×';
-  document.getElementById('cmp-vwra').textContent = v.toFixed(2)+'×';
-  document.getElementById('cmp-nifty').textContent = n.toFixed(2)+'×';
-  const cv = c-v, cn = c-n, vn = v-n;
-  document.getElementById('cmp-cv').textContent = (cv>=0?'+':'')+cv.toFixed(2);
-  document.getElementById('cmp-cn').textContent = (cn>=0?'+':'')+cn.toFixed(2);
-  document.getElementById('cmp-vn').textContent = (vn>=0?'+':'')+vn.toFixed(2);
-
-  // update data table first row
-  DATA[0].cspx = c; DATA[0].vwra = v; DATA[0].nifty = n;
+  const cey=(1/c*100),vey=(1/v*100),ney=(1/n*100);
+  const cerp=cey-ub,verp=vey-ub,nerp=ney-ib;
+  document.getElementById('fm-cspx-ey').textContent=cey.toFixed(2)+'%';
+  document.getElementById('fm-cspx-pe').textContent=c.toFixed(2);
+  document.getElementById('fm-us-yield').textContent=ub.toFixed(2)+'%';
+  document.getElementById('fm-us-erp').textContent=(cerp>=0?'+':'')+cerp.toFixed(2)+'%';
+  document.getElementById('fm-us-erp').style.color=cerp<0?'var(--red)':'var(--green)';
+  document.getElementById('fm-us-signal').textContent=cerp<0?'Equities expensive vs bonds':'Equities attractive vs bonds';
+  document.getElementById('fm-vwra-ey').textContent=vey.toFixed(2)+'%';
+  document.getElementById('fm-vwra-pe').textContent=v.toFixed(2);
+  document.getElementById('fm-vwra-erp').textContent=(verp>=0?'+':'')+verp.toFixed(2)+'%';
+  document.getElementById('fm-vwra-erp').style.color=verp<0?'var(--red)':'var(--green)';
+  document.getElementById('fm-vwra-signal').textContent=verp<0?'Expensive vs bonds (approx.)':'Marginally attractive vs bonds';
+  document.getElementById('fm-nifty-ey').textContent=ney.toFixed(2)+'%';
+  document.getElementById('fm-nifty-pe').textContent=n.toFixed(2);
+  document.getElementById('fm-india-yield').textContent=ib.toFixed(2)+'%';
+  document.getElementById('fm-india-erp').textContent=(nerp>=0?'+':'')+nerp.toFixed(2)+'%';
+  document.getElementById('fm-india-erp').style.color=nerp<0?'var(--red)':'var(--green)';
+  document.getElementById('fm-india-signal').textContent=nerp<0?'Nifty expensive vs G-Sec':'Nifty attractive vs G-Sec';
+  D[0]={...D[0],c,v,n,ub,ib};
   buildTable();
 }
 
-// ════════════════ TABLE ════════════════
 function buildTable() {
-  const tbody = document.getElementById('data-tbody');
-  tbody.innerHTML = '';
-  [...DATA].sort((a,b)=>b.y-a.y).forEach(d => {
-    const [czl, czc] = classifyCSPX(d.cspx);
-    const [vzl, vzc] = classifyVWRA(d.vwra);
-    const nzones = d.nifty ? classifyNifty(d.nifty) : ['-','-'];
-    const spread = d.cspx && d.vwra ? (d.cspx-d.vwra).toFixed(1) : '—';
-    const spreadColor = parseFloat(spread)>0 ? 'var(--accent-coral)' : 'var(--accent-teal)';
-    const standaloneMark = d.y <= 2020 && d.nifty ? ' <span style="font-size:9px;color:var(--text3)">standalone</span>' : '';
-    tbody.innerHTML += `<tr>
-      <td class="td-year">${d.y}</td>
-      <td class="td-num">${d.cspx ? d.cspx.toFixed(2)+'×' : '—'}</td>
-      <td><span class="zone-badge ${czc}" style="font-size:10px">${czl}</span></td>
-      <td class="td-num">${d.vwra ? d.vwra.toFixed(2)+'×' : '—'}</td>
-      <td><span class="zone-badge ${vzc}" style="font-size:10px">${vzl}</span></td>
-      <td class="td-num">${d.nifty ? d.nifty.toFixed(1)+'×'+standaloneMark : '—'}</td>
-      <td>${d.nifty ? '<span class="zone-badge '+nzones[1]+'" style="font-size:10px">'+nzones[0]+'</span>' : '—'}</td>
-      <td class="td-num td-spread" style="color:${spreadColor}">${spread!=='—'?(parseFloat(spread)>=0?'+':'')+spread:'—'}</td>
+  const tb=document.getElementById('tbody'); tb.innerHTML='';
+  [...D].sort((a,b)=>b.y-a.y).forEach(r=>{
+    const zc=zone('c',r.c),zv=zone('v',r.v),zn=r.n?zone('n',r.n):null;
+    const sp=r.c&&r.v?(r.c-r.v).toFixed(1):'—';
+    const sc=parseFloat(sp)>0?'color:var(--red)':'color:var(--green)';
+    const nm=r.n?r.n.toFixed(1)+'×'+(r.y<=2020?' <span style="font-size:10px;color:var(--text3)">(standalone)</span>':''):'—';
+    tb.innerHTML+=`<tr>
+      <td style="font-weight:400;font-family:var(--mono)">${r.y}</td>
+      <td class="tr">${r.c?r.c.toFixed(2)+'×':'—'}</td>
+      <td><span class="zone ${zc.z}" style="font-size:10px">${zc.l}</span></td>
+      <td class="tr">${r.v?r.v.toFixed(2)+'×':'—'}</td>
+      <td><span class="zone ${zv.z}" style="font-size:10px">${zv.l}</span></td>
+      <td class="tr">${nm}</td>
+      <td>${zn?`<span class="zone ${zn.z}" style="font-size:10px">${zn.l}</span>`:'—'}</td>
+      <td class="tr" style="${sc}">${sp!=='—'?(parseFloat(sp)>=0?'+':'')+sp:'—'}</td>
     </tr>`;
   });
 }
 
-// ════════════════ CHARTS ════════════════
-const COLORS = { cspx:'#6fa4d4', vwra:'#4db89a', nifty:'#d4a44c', avg:'#5c5b57' };
-const gridColor = 'rgba(255,255,255,0.04)';
-const tickColor = '#5c5b57';
-
-function baseOpts(yMin, yMax) {
+const gc='rgba(0,0,0,0.04)', tc='#a09d96', fm='IBM Plex Mono,monospace';
+function baseOpts(mn,mx) {
   return {
-    responsive: true, maintainAspectRatio: false,
-    interaction: { mode:'index', intersect:false },
-    plugins: {
-      legend: { display:false },
-      tooltip: {
-        backgroundColor:'#1c1c1a', borderColor:'rgba(255,255,255,0.1)', borderWidth:1,
-        titleColor:'#9a9890', bodyColor:'#e8e6df',
-        callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2)+'×' : '—'}` }
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:false},
+      tooltip:{backgroundColor:'#fff',borderColor:'#e4e2da',borderWidth:1,titleColor:'#6b6860',bodyColor:'#1a1917',padding:10,
+        callbacks:{label:c=>' '+c.dataset.label+': '+(c.parsed.y!==null?c.parsed.y.toFixed(2)+'×':'—')}
       }
     },
-    scales: {
-      x: { grid:{color:gridColor}, ticks:{color:tickColor, font:{family:'DM Mono, monospace', size:10}, maxRotation:45, autoSkip:true, maxTicksLimit:14} },
-      y: { grid:{color:gridColor}, ticks:{color:tickColor, font:{family:'DM Mono, monospace', size:10}, callback: v=>v+'×'}, min:yMin, max:yMax }
+    scales:{
+      x:{grid:{color:gc},ticks:{color:tc,font:{family:fm,size:10},maxRotation:45,autoSkip:true,maxTicksLimit:14}},
+      y:{grid:{color:gc},ticks:{color:tc,font:{family:fm,size:10},callback:v=>v+'×'},min:mn,max:mx}
     }
   };
 }
+function filt(cutoff){return D.filter(d=>d.y>=cutoff).sort((a,b)=>a.y-b.y);}
 
-const cspxRanges = {5:2021,10:2016,20:2006,999:1994};
-const vwraRanges = {5:2021,10:2016,20:2006,999:1994};
-const niftyRanges = {5:2021,10:2016,20:2006,999:1994};
-let cspxRange=5, vwraRange=5, niftyRange=5, cmpRange=5;
-
-function filtered(cutoffY) { return DATA.filter(d=>d.y>=cutoffY).sort((a,b)=>a.y-b.y); }
-
-function buildCSPXChart(cutoffY) {
-  const data = filtered(cutoffY);
-  const labels = data.map(d=>d.y.toString());
-  const vals = data.map(d=>d.cspx);
-  const avgLine = data.map(()=>AVG_SP500);
-  if (charts.cspx) charts.cspx.destroy();
-  charts.cspx = new Chart(document.getElementById('chart-cspx'), {
-    type:'line', data:{labels, datasets:[
-      {label:'CSPX P/E', data:vals, borderColor:COLORS.cspx, backgroundColor:'rgba(111,164,212,0.05)', tension:0.3, pointRadius:3, pointBackgroundColor:COLORS.cspx, borderWidth:2, fill:true},
-      {label:'25Y avg', data:avgLine, borderColor:COLORS.avg, borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false}
-    ]},
-    options: baseOpts(8,42)
+function buildLine(id,key,color,avg,mn,mx,cutoff) {
+  const data=filt(cutoff), labels=data.map(d=>d.y.toString()), vals=data.map(d=>d[key]);
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'line',data:{labels,datasets:[
+      {label:key.toUpperCase(),data:vals,borderColor:color,backgroundColor:color+'18',tension:0.3,pointRadius:3,pointBackgroundColor:color,borderWidth:2,fill:true},
+      {label:'Long-run avg',data:labels.map(()=>avg),borderColor:tc,borderWidth:1.2,borderDash:[5,4],pointRadius:0,fill:false},
+    ]},options:baseOpts(mn,mx)
   });
 }
 
-function buildVWRAChart(cutoffY) {
-  const data = filtered(cutoffY);
-  const labels = data.map(d=>d.y.toString());
-  const vals = data.map(d=>d.vwra);
-  const avgLine = data.map(()=>AVG_AW);
-  const avg5 = data.map(()=>18.6);
-  if (charts.vwra) charts.vwra.destroy();
-  charts.vwra = new Chart(document.getElementById('chart-vwra'), {
-    type:'line', data:{labels, datasets:[
-      {label:'VWRA P/E', data:vals, borderColor:COLORS.vwra, backgroundColor:'rgba(77,184,154,0.05)', tension:0.3, pointRadius:3, pointBackgroundColor:COLORS.vwra, borderWidth:2, fill:true},
-      {label:'20Y avg', data:avgLine, borderColor:COLORS.avg, borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false},
-      {label:'5Y avg', data:avg5, borderColor:COLORS.vwra, borderWidth:1, borderDash:[2,4], pointRadius:0, fill:false, borderAlpha:0.5}
-    ]},
-    options: baseOpts(8,32)
+function buildERP(cutoff) {
+  const data=filt(cutoff).filter(d=>d.c&&d.ub);
+  const labels=data.map(d=>d.y.toString());
+  const cerp=data.map(d=>+(1/d.c*100-d.ub).toFixed(2));
+  const nerp=data.map(d=>d.n&&d.ib?+(1/d.n*100-d.ib).toFixed(2):null);
+  if(charts.erp)charts.erp.destroy();
+  const opts=baseOpts(-6,8);
+  opts.plugins.tooltip.callbacks.label=c=>' '+c.dataset.label+': '+(c.parsed.y!==null?(c.parsed.y>=0?'+':'')+c.parsed.y.toFixed(2)+'%':'—');
+  opts.scales.y.ticks.callback=v=>(v>=0?'+':'')+v+'%';
+  charts.erp=new Chart(document.getElementById('ch-erp'),{
+    type:'line',data:{labels,datasets:[
+      {label:'S&P 500 ERP',data:cerp,borderColor:'var(--blue)',backgroundColor:'rgba(37,99,168,0.07)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--blue)',borderWidth:2,fill:true},
+      {label:'Nifty ERP',data:nerp,borderColor:'var(--amber)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--amber)',borderWidth:2,fill:false},
+      {label:'Zero line',data:labels.map(()=>0),borderColor:tc,borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false}
+    ]},options:opts
   });
 }
 
-function buildNiftyChart(cutoffY) {
-  const data = filtered(cutoffY).filter(d=>d.nifty!==null);
-  const labels = data.map(d=>d.y.toString());
-  const vals = data.map(d=>d.nifty);
-  const avgLine = data.map(()=>AVG_NIFTY);
-  if (charts.nifty) charts.nifty.destroy();
-  charts.nifty = new Chart(document.getElementById('chart-nifty'), {
-    type:'line', data:{labels, datasets:[
-      {label:'Nifty 50 P/E', data:vals, borderColor:COLORS.nifty, backgroundColor:'rgba(212,164,76,0.05)', tension:0.3, pointRadius:3, pointBackgroundColor:COLORS.nifty, borderWidth:2, fill:true},
-      {label:'20Y avg', data:avgLine, borderColor:COLORS.avg, borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false}
-    ]},
-    options: baseOpts(8,45)
-  });
+function setRange(key,r,btn) {
+  btn.closest('.range-row').querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); ranges[key]=r;
+  const cfg={cspx:['c','#2563a8',21.4,8,40],vwra:['v','#1a6b4a',14.9,8,30],nifty:['n','#92610a',21.0,8,42]}[key];
+  buildLine('ch-'+key,cfg[0],cfg[1],cfg[2],cfg[3],cfg[4],2026-r);
+}
+function setERPRange(r,btn) {
+  btn.closest('.range-row').querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); erpRange=r; buildERP(2026-r);
 }
 
-function buildCompareChart(cutoffY) {
-  const data = filtered(cutoffY);
-  const labels = data.map(d=>d.y.toString());
-  if (charts.compare) charts.compare.destroy();
-  charts.compare = new Chart(document.getElementById('chart-compare'), {
-    type:'bar', data:{labels, datasets:[
-      {label:'CSPX', data:data.map(d=>d.cspx), backgroundColor:'rgba(111,164,212,0.75)', borderRadius:2, barPercentage:0.7},
-      {label:'VWRA', data:data.map(d=>d.vwra), backgroundColor:'rgba(77,184,154,0.7)', borderRadius:2, barPercentage:0.7},
-      {label:'Nifty 50', data:data.map(d=>d.nifty), backgroundColor:'rgba(212,164,76,0.7)', borderRadius:2, barPercentage:0.7}
-    ]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      interaction:{mode:'index'},
-      plugins:{legend:{display:false}, tooltip:{backgroundColor:'#1c1c1a',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#9a9890',bodyColor:'#e8e6df',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y!==null?ctx.parsed.y.toFixed(2)+'×':'—'}`}}},
-      scales:{
-        x:{grid:{display:false},ticks:{color:tickColor,font:{family:'DM Mono, monospace',size:10}}},
-        y:{grid:{color:gridColor},ticks:{color:tickColor,font:{family:'DM Mono, monospace',size:10},callback:v=>v+'×'},min:0}
-      }
-    }
-  });
-}
-
-function buildSpreadChart() {
-  const data = filtered(2016).filter(d=>d.cspx&&d.vwra&&d.nifty);
-  const labels = data.map(d=>d.y.toString());
-  if (charts.spread) charts.spread.destroy();
-  charts.spread = new Chart(document.getElementById('chart-spread'), {
-    type:'line', data:{labels, datasets:[
-      {label:'CSPX − VWRA', data:data.map(d=>+(d.cspx-d.vwra).toFixed(2)), borderColor:COLORS.cspx, tension:0.3, pointRadius:3, pointBackgroundColor:COLORS.cspx, borderWidth:2, fill:false},
-      {label:'CSPX − Nifty', data:data.map(d=>+(d.cspx-d.nifty).toFixed(2)), borderColor:'#e07b5a', tension:0.3, pointRadius:3, pointBackgroundColor:'#e07b5a', borderWidth:2, fill:false}
-    ]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c1c1a',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#9a9890',bodyColor:'#e8e6df',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y>=0?'+':''}${ctx.parsed.y.toFixed(2)}`}}},
-      scales:{
-        x:{grid:{color:gridColor},ticks:{color:tickColor,font:{family:'DM Mono, monospace',size:10}}},
-        y:{grid:{color:gridColor},ticks:{color:tickColor,font:{family:'DM Mono, monospace',size:10},callback:v=>(v>=0?'+':'')+v+'×'}}
-      }
-    }
-  });
-}
-
-function setChartRange(which, range, btn) {
-  btn.closest('.range-group').querySelectorAll('.range-btn').forEach(b=>b.classList.remove('on'));
+let chartsInit=false;
+function goPage(id,btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
   btn.classList.add('on');
-  const cutoffY = 2026 - range;
-  if (which==='cspx') { cspxRange=range; buildCSPXChart(cutoffY); }
-  if (which==='vwra') { vwraRange=range; buildVWRAChart(cutoffY); }
-  if (which==='nifty') { niftyRange=range; buildNiftyChart(cutoffY); }
-}
-function setCmpRange(range, btn) {
-  btn.closest('.range-group').querySelectorAll('.range-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  cmpRange=range;
-  buildCompareChart(2026-range);
-}
-
-// ════════════════ NAVIGATION ════════════════
-let chartsBuilt = false;
-function goPage(id, btn) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  btn.classList.add('active');
-  if ((id==='charts'||id==='compare') && !chartsBuilt) {
-    buildCSPXChart(2021);
-    buildVWRAChart(2021);
-    buildNiftyChart(2021);
-    buildCompareChart(2021);
-    buildSpreadChart();
-    chartsBuilt = true;
+  if(!chartsInit&&(id==='charts'||id==='fedmodel')) {
+    buildLine('ch-cspx','c','#2563a8',21.4,8,40,2021);
+    buildLine('ch-vwra','v','#1a6b4a',14.9,8,30,2021);
+    buildLine('ch-nifty','n','#92610a',21.0,8,42,2021);
+    buildERP(2016); chartsInit=true;
   }
-  if (id==='data') buildTable();
+  if(id==='data') buildTable();
 }
 
-// ════════════════ LIVE REFRESH ════════════════
 async function doRefresh() {
-  const btn = document.getElementById('refresh-btn');
-  const ri = document.getElementById('ri');
-  const sb = document.getElementById('status-bar');
-  const sm = document.getElementById('status-msg');
-  btn.disabled = true;
-  ri.innerHTML = '<span class="spin">↻</span>';
-  sb.className = '';
-  sm.textContent = 'Fetching latest P/E data via AI web search…';
+  const btn=document.getElementById('refresh-btn'),ri=document.getElementById('ri');
+  const st=document.getElementById('status'),sm=document.getElementById('status-msg');
+  btn.disabled=true; ri.innerHTML='<span class="spin">↻</span>';
+  st.className=''; sm.textContent='Fetching live data via AI web search…';
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
         tools:[{type:'web_search_20250305',name:'web_search'}],
-        system:'You are a financial data assistant. Search the web for (1) current S&P 500 TTM P/E ratio, (2) current FTSE All-World TTM P/E ratio (use worldperatio.com or VT ETF), (3) current Nifty 50 TTM P/E ratio from NSE India or nifty-pe-ratio.com. Return ONLY valid JSON: {"sp500_pe":number,"allworld_pe":number,"nifty_pe":number,"as_of":"date string","sp500_src":"source","allworld_src":"source","nifty_src":"source"}. No markdown, no explanation.',
-        messages:[{role:'user',content:'Find current P/E ratios: S&P 500 TTM, FTSE All-World TTM, and Nifty 50 TTM. Return JSON only.'}]
+        system:'Financial data assistant. Search for: (1) current S&P 500 TTM P/E from multpl.com, (2) FTSE All-World TTM P/E from worldperatio.com, (3) Nifty 50 TTM P/E from nifty-pe-ratio.com, (4) US 10-year Treasury yield, (5) India 10-year G-Sec yield. Return ONLY valid JSON with no markdown: {"sp500_pe":number,"allworld_pe":number,"nifty_pe":number,"us_10y":number,"india_10y":number,"as_of":"date string","sources":{"sp500":"str","allworld":"str","nifty":"str","us10y":"str","india10y":"str"}}',
+        messages:[{role:'user',content:'Get current P/E ratios for S&P 500, FTSE All-World, Nifty 50, plus US and India 10Y bond yields. JSON only.'}]
       })
     });
-    const data = await resp.json();
-    let parsed = null;
-    for (const b of (data.content||[])) {
-      if (b.type==='text') {
-        try {
-          const clean = b.text.replace(/```json|```/g,'').trim();
-          const j = JSON.parse(clean);
-          if (j.sp500_pe && j.allworld_pe && j.nifty_pe) { parsed=j; break; }
-        } catch(e){}
-      }
+    const data=await r.json(); let parsed=null;
+    for(const b of(data.content||[])) {
+      if(b.type==='text'){try{const j=JSON.parse(b.text.replace(/```json|```/g,'').trim());if(j.sp500_pe&&j.nifty_pe){parsed=j;break;}}catch(e){}}
     }
-    if (parsed) {
-      live.cspx = parseFloat(parsed.sp500_pe);
-      live.vwra = parseFloat(parsed.allworld_pe);
-      live.nifty = parseFloat(parsed.nifty_pe);
-      DATA[0].cspx = live.cspx; DATA[0].vwra = live.vwra; DATA[0].nifty = live.nifty;
-      updateUI();
-      if (chartsBuilt) {
-        buildCSPXChart(2026-cspxRange); buildVWRAChart(2026-vwraRange);
-        buildNiftyChart(2026-niftyRange); buildCompareChart(2026-cmpRange); buildSpreadChart();
+    if(parsed){
+      live={c:+parsed.sp500_pe,v:+parsed.allworld_pe,n:+parsed.nifty_pe,ub:+parsed.us_10y,ib:+parsed.india_10y};
+      upd();
+      if(chartsInit){
+        buildLine('ch-cspx','c','#2563a8',21.4,8,40,2026-ranges.cspx);
+        buildLine('ch-vwra','v','#1a6b4a',14.9,8,30,2026-ranges.vwra);
+        buildLine('ch-nifty','n','#92610a',21.0,8,42,2026-ranges.nifty);
+        buildERP(2026-erpRange);
       }
-      sb.className = 'ok';
-      sm.textContent = `✓ Updated ${parsed.as_of||'now'} — S&P 500: ${live.cspx.toFixed(2)}× (${parsed.sp500_src||'—'}) · All-World: ${live.vwra.toFixed(2)}× (${parsed.allworld_src||'—'}) · Nifty: ${live.nifty.toFixed(2)}× (${parsed.nifty_src||'—'})`;
+      st.className='ok';
+      sm.textContent=`✓ Updated ${parsed.as_of||''} · S&P 500: ${live.c.toFixed(2)}× · All-World: ${live.v.toFixed(2)}× · Nifty: ${live.n.toFixed(2)}× · US 10Y: ${live.ub.toFixed(2)}% · India 10Y: ${live.ib.toFixed(2)}%`;
     } else {
-      sb.className = 'err';
-      sm.textContent = '⚠ Could not parse live response. Showing last cached data.';
+      st.className='err'; sm.textContent='⚠ Could not parse live response. Showing cached data.';
     }
-  } catch(e) {
-    sb.className = 'err';
-    sm.textContent = '⚠ Refresh failed: ' + e.message;
-  }
-  ri.textContent = '↻';
-  btn.disabled = false;
+  } catch(e){ st.className='err'; sm.textContent='⚠ Refresh failed: '+e.message; }
+  ri.textContent='↻'; btn.disabled=false;
 }
 
-// ════════════════ INIT ════════════════
-updateUI();
-document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
+upd();
+document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
 </script>
 </body>
 </html>
