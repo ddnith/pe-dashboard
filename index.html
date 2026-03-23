@@ -3,119 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Index Investor Dashboard · CSPX · VWRA · Nifty 50</title>
-<meta name="description" content="A thinking companion for long-term index investors. Plain-language reasoning, valuation signals, and allocation guidance for CSPX, VWRA and Nifty 50.">
+<title>Market Signal Dashboard · CSPX · VWRA · Nifty 50</title>
+<meta name="description" content="Multi-signal valuation dashboard for CSPX, VWRA and Nifty 50. P/E, CAPE, P/B, Dividend Yield, ERP, Buffett Indicator and 10-year expected return estimates.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-:root{
-  --bg:#f4f3ef;--sur:#fff;--s2:#eceae4;--s3:#e2e0d8;
-  --bdr:#dedad0;--bdr2:#c4c0b3;
-  --tx:#17160f;--t2:#5a5850;--t3:#98958d;
-  --blu:#1a5ea0;--blu-lt:#e5f0fb;
-  --grn:#156640;--grn-lt:#e3f2eb;
-  --amb:#855908;--amb-lt:#f9efd5;
-  --red:#8b1c1c;--red-lt:#faebeb;
+:root {
+  --bg:#f5f4f0; --sur:#fff; --s2:#eceae3; --s3:#e2dfd6;
+  --bdr:#dedad0; --bdr2:#c4bfb0;
+  --tx:#17160e; --t2:#5a5848; --t3:#98948a;
+  --blu:#1a5ea0; --blu-lt:#e5f0fb;
+  --grn:#156640; --grn-lt:#e3f2eb;
+  --amb:#855908; --amb-lt:#f9efd5;
+  --red:#8b1c1c; --red-lt:#faebeb;
   --font:'IBM Plex Sans',system-ui,sans-serif;
   --mono:'IBM Plex Mono',monospace;
-  --r:8px;--rl:12px;
+  --r:8px; --rl:12px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:14px;scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--tx);font-family:var(--font);font-weight:300;line-height:1.65;min-height:100vh;}
+body{background:var(--bg);color:var(--tx);font-family:var(--font);font-weight:300;line-height:1.65;}
 
 /* NAV */
 header{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 32px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300;}
-.logo{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.01em;white-space:nowrap;flex-shrink:0;}
+.logo{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.01em;white-space:nowrap;}
 .logo small{font-weight:300;color:var(--t3);}
 nav{display:flex;gap:2px;}
-.nb{background:none;border:none;font-family:var(--font);font-size:13px;font-weight:300;color:var(--t2);padding:6px 13px;border-radius:6px;cursor:pointer;transition:all .12s;white-space:nowrap;}
+.nb{background:none;border:none;font-family:var(--font);font-size:13px;font-weight:300;color:var(--t2);padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .12s;white-space:nowrap;}
 .nb:hover{background:var(--s2);color:var(--tx);}
 .nb.on{background:var(--s2);color:var(--tx);font-weight:400;}
-.hdr-r{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.hdr-r{display:flex;align-items:center;gap:8px;}
 .hdr-date{font-family:var(--mono);font-size:11px;color:var(--t3);}
-#rfbtn{background:none;border:1px solid var(--bdr2);font-family:var(--font);font-size:12px;color:var(--t2);padding:5px 13px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .12s;white-space:nowrap;}
+#rfbtn{background:none;border:1px solid var(--bdr2);font-family:var(--font);font-size:12px;color:var(--t2);padding:5px 13px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .12s;}
 #rfbtn:hover{border-color:var(--blu);color:var(--blu);}
-#rfbtn:disabled{opacity:.4;cursor:not-allowed;}
-.spin{display:inline-block;animation:sp .85s linear infinite;}
-@keyframes sp{to{transform:rotate(360deg);}}
 
-/* PAGES */
-.page{display:none;max-width:1080px;margin:0 auto;padding:32px 32px 80px;}
+/* LAYOUT */
+.page{display:none;max-width:1100px;margin:0 auto;padding:32px 32px 80px;}
 .page.on{display:block;}
+@media(max-width:700px){.page{padding:20px 14px 60px;}header{padding:0 14px;}nav .nb{padding:6px 8px;font-size:12px;}}
 
 /* STATUS */
 #status{display:flex;align-items:flex-start;gap:8px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--t2);margin-bottom:24px;font-family:var(--mono);line-height:1.5;}
-#status.ok{background:var(--grn-lt);border-color:#a5d8b9;color:var(--grn);}
-#status.err{background:var(--red-lt);border-color:#efb8b8;color:var(--red);}
 
-/* PAGE TITLE */
-.ph{margin-bottom:24px;}
-.ph h1{font-size:21px;font-weight:300;letter-spacing:-.025em;margin-bottom:4px;}
-.ph p{font-size:13px;color:var(--t2);max-width:580px;line-height:1.7;}
+/* PAGE HDR */
+.ph{margin-bottom:28px;}
+.ph h1{font-size:22px;font-weight:300;letter-spacing:-.025em;margin-bottom:4px;}
+.ph p{font-size:13px;color:var(--t2);}
+
+/* VERDICT CARDS - the hero section */
+.verdict-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:10px;}
+@media(max-width:700px){.verdict-grid{grid-template-columns:1fr;}}
+
+.vcard{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:22px;border-top:3px solid transparent;position:relative;}
+.vcard.vc-b{border-top-color:var(--blu);}
+.vcard.vc-g{border-top-color:var(--grn);}
+.vcard.vc-a{border-top-color:var(--amb);}
+.vc-ticker{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.06em;margin-bottom:3px;}
+.vc-name{font-size:12px;color:var(--t2);margin-bottom:14px;}
+.vc-score-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.vc-score{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;flex-shrink:0;border:2px solid transparent;}
+.vc-score-num{font-family:var(--mono);font-size:20px;font-weight:500;line-height:1;}
+.vc-score-den{font-family:var(--mono);font-size:9px;opacity:.7;}
+.sc-hot{background:var(--red-lt);color:var(--red);border-color:#f0baba;}
+.sc-warm{background:var(--amb-lt);color:var(--amb);border-color:#e8c97a;}
+.sc-neutral{background:var(--s2);color:var(--t2);border-color:var(--bdr2);}
+.sc-cool{background:var(--grn-lt);color:var(--grn);border-color:#a8d9be;}
+.vc-verdict-label{font-size:17px;font-weight:300;letter-spacing:-.015em;}
+.vc-verdict-sub{font-size:11px;color:var(--t3);margin-top:2px;}
+
+/* VERDICT BOX */
+.verdict-box{border-radius:6px;padding:10px 12px;font-size:12px;line-height:1.6;margin-bottom:12px;}
+.vb-add{background:var(--grn-lt);color:var(--grn);border:1px solid #a8d9be;}
+.vb-hold{background:var(--s2);color:var(--t2);border:1px solid var(--bdr2);}
+.vb-caution{background:var(--amb-lt);color:var(--amb);border:1px solid #e8c97a;}
+.vb-avoid{background:var(--red-lt);color:var(--red);border:1px solid #f0baba;}
+.verdict-box strong{font-weight:500;}
+
+/* SIGNAL LIGHTS */
+.sig-lights{display:flex;flex-wrap:wrap;gap:5px;}
+.sl{font-size:10px;padding:2px 7px;border-radius:4px;display:flex;align-items:center;gap:4px;cursor:help;position:relative;}
+.sl::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.sl-g{background:var(--grn-lt);color:var(--grn);}
+.sl-g::before{background:var(--grn);}
+.sl-a{background:var(--amb-lt);color:var(--amb);}
+.sl-a::before{background:var(--amb);}
+.sl-r{background:var(--red-lt);color:var(--red);}
+.sl-r::before{background:var(--red);}
+.sl-n{background:var(--s2);color:var(--t3);}
+.sl-n::before{background:var(--t3);}
+
+/* EXP RETURN STRIP */
+.exp-return{margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);}
+.er-label{font-size:10px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.er-range{font-family:var(--mono);font-size:16px;font-weight:400;letter-spacing:-.02em;}
+.er-sub{font-size:10px;color:var(--t3);margin-top:1px;}
 
 /* SECTION */
 .sec{margin-top:32px;}
-.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
-.st{font-size:11px;font-weight:400;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.sec-title{font-size:12px;font-weight:400;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;}
 
-/* CARDS */
-.card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);}
-.cardp{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:20px;}
-
-/* REASONING BOX — the most important new element */
-.reasoning-box{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:24px;margin-bottom:20px;}
-.rb-eyebrow{font-size:10px;font-family:var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
-.rb-headline{font-size:18px;font-weight:400;line-height:1.4;margin-bottom:14px;letter-spacing:-.01em;}
-.rb-bullets{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-.rb-bullet{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--t2);line-height:1.65;}
-.rb-bullet-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
-.rb-divider{border:none;border-top:1px solid var(--bdr);margin:16px 0;}
-.rb-formula{background:var(--s2);border-radius:6px;padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.7;}
-.rb-formula strong{font-weight:500;color:var(--tx);}
-.rb-formula code{font-family:var(--mono);font-size:11px;background:var(--s3);padding:1px 5px;border-radius:3px;}
-
-/* INDEX CARDS */
-.idx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
-.idx-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:18px;border-top:3px solid transparent;}
-.idx-card.c-blu{border-top-color:var(--blu);}
-.idx-card.c-grn{border-top-color:var(--grn);}
-.idx-card.c-amb{border-top-color:var(--amb);}
-.ic-ticker{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.06em;margin-bottom:2px;}
-.ic-name{font-size:11px;color:var(--t2);margin-bottom:12px;}
-.ic-pe{font-size:32px;font-weight:300;font-family:var(--mono);letter-spacing:-.04em;line-height:1;margin-bottom:6px;}
-.c-blu .ic-pe{color:var(--blu);}
-.c-grn .ic-pe{color:var(--grn);}
-.c-amb .ic-pe{color:var(--amb);}
-.ic-row{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
-.ic-signals{display:flex;flex-direction:column;gap:5px;padding-top:10px;border-top:1px solid var(--bdr);}
-.ic-sig{display:flex;justify-content:space-between;align-items:center;font-size:11px;}
-.ic-sig-name{color:var(--t3);}
-.ic-sig-val{font-family:var(--mono);color:var(--t2);}
-
-/* ALLOCATION BLOCK */
-.alloc-block{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:20px;margin-bottom:12px;}
-.alloc-title{font-size:13px;font-weight:400;margin-bottom:4px;}
-.alloc-sub{font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6;}
-.alloc-bars{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
-.arow{display:flex;align-items:center;gap:10px;}
-.aname{font-size:12px;color:var(--t2);min-width:80px;}
-.abar-w{flex:1;height:8px;background:var(--s2);border-radius:4px;overflow:hidden;}
-.abar{height:100%;border-radius:4px;transition:width .9s cubic-bezier(.4,0,.2,1);}
-.apct{font-family:var(--mono);font-size:12px;min-width:36px;text-align:right;}
-.alloc-why{font-size:12px;color:var(--t3);line-height:1.65;font-style:italic;}
-
-/* EXPECTED RETURN */
-.exp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px;}
-.exp-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;}
-.exp-lbl{font-size:10px;font-family:var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
-.exp-val{font-size:26px;font-weight:300;font-family:var(--mono);letter-spacing:-.03em;}
-.exp-sub{font-size:11px;color:var(--t3);margin-top:3px;line-height:1.5;}
+/* SIGNAL TABLE */
+.tbl-wrap{border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
+.stbl{width:100%;border-collapse:collapse;font-size:12px;}
+.stbl thead{position:sticky;top:0;z-index:2;}
+.stbl th{background:var(--s2);font-weight:400;font-size:10px;font-family:var(--mono);color:var(--t3);letter-spacing:.05em;padding:8px 12px;text-align:left;border-bottom:1px solid var(--bdr);}
+.stbl td{padding:9px 12px;border-bottom:1px solid var(--bdr);vertical-align:middle;}
+.stbl tr:last-child td{border-bottom:none;}
+.stbl tbody tr:hover td{background:var(--s2);}
+.tr{text-align:right;font-family:var(--mono);}
+.sig-name-cell .sn{font-weight:400;font-size:12px;}
+.sig-name-cell .sd{font-size:10px;color:var(--t3);margin-top:1px;}
+.sig-val-cell{text-align:right;font-family:var(--mono);font-size:12px;}
+.sig-avg{font-size:10px;color:var(--t3);margin-top:1px;}
 
 /* ZONE BADGE */
-.z{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:100px;white-space:nowrap;}
+.z{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:100px;white-space:nowrap;}
 .z::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .zg{background:var(--grn-lt);color:var(--grn);}.zg::before{background:var(--grn);}
 .za{background:var(--amb-lt);color:var(--amb);}.za::before{background:var(--amb);}
@@ -123,939 +128,914 @@ nav{display:flex;gap:2px;}
 .zb{background:var(--blu-lt);color:var(--blu);}.zb::before{background:var(--blu);}
 .zn{background:var(--s2);color:var(--t3);}.zn::before{background:var(--t3);}
 
-/* INFO PANELS */
-.info{background:var(--s2);border:1px solid var(--bdr);border-left:3px solid var(--amb);border-radius:var(--r);padding:12px 15px;font-size:12px;color:var(--t2);line-height:1.75;margin-bottom:14px;}
+/* TOOLTIP */
+.tip{position:relative;display:inline-flex;}
+.tip-i{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--bdr2);color:var(--t3);font-size:9px;cursor:help;margin-left:4px;font-family:var(--mono);vertical-align:middle;transition:all .12s;flex-shrink:0;}
+.tip-i:hover{border-color:var(--blu);color:var(--blu);}
+.tip-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--tx);color:#f0efe8;font-size:11px;font-weight:300;line-height:1.65;padding:10px 13px;border-radius:6px;width:240px;z-index:500;box-shadow:0 4px 20px rgba(0,0,0,.15);pointer-events:none;}
+.tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--tx);}
+.tip:hover .tip-box{display:block;}
+
+/* INFO PANEL */
+.info{background:var(--s2);border:1px solid var(--bdr);border-left:3px solid var(--amb);border-radius:var(--r);padding:12px 15px;font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:14px;}
 .info strong{font-weight:500;color:var(--tx);}
 .info.blue{border-left-color:var(--blu);}
 .info.green{border-left-color:var(--grn);}
-.info.red{border-left-color:var(--red);}
-.info.plain{border-left:none;background:none;border:1px solid var(--bdr);}
 
-/* LEARN: KNOWLEDGE CARDS */
-.know-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;margin-bottom:10px;}
-.know-hdr{padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;cursor:pointer;user-select:none;}
-.know-hdr:hover{background:var(--s2);}
-.kh-left{flex:1;}
-.kh-title{font-size:14px;font-weight:400;margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.kh-sub{font-size:12px;color:var(--t2);}
-.kh-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.kh-val{font-family:var(--mono);font-size:16px;font-weight:400;}
-.ktog{font-size:16px;color:var(--t3);transition:transform .2s;flex-shrink:0;}
-.know-body{display:none;padding:0 18px 18px;}
-.know-body.open{display:block;}
-.kb-now{background:var(--s2);border-radius:6px;padding:13px 15px;margin-bottom:14px;font-size:13px;color:var(--t2);line-height:1.75;}
-.kb-now strong{font-weight:500;color:var(--tx);}
-.kb-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-.kb-stat{background:var(--s2);border-radius:6px;padding:12px;}
-.kb-stat-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;font-family:var(--mono);margin-bottom:3px;}
-.kb-stat-val{font-size:18px;font-family:var(--mono);font-weight:400;}
-.kb-stat-sub{font-size:11px;color:var(--t3);margin-top:2px;}
-.kb-sec{margin-bottom:12px;}
-.kb-sec h4{font-size:11px;font-weight:500;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.kb-sec p,.kb-sec li{font-size:13px;color:var(--t2);line-height:1.75;}
-.kb-sec ul{padding-left:16px;}
-.kb-sec li{margin-bottom:3px;}
-.kb-action{background:var(--grn-lt);border:1px solid #a5d8b9;border-radius:6px;padding:12px 14px;margin-top:10px;}
-.kb-action h4{color:var(--grn);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.kb-action p{font-size:12px;color:var(--grn);line-height:1.7;}
-.kb-caveat{background:var(--amb-lt);border:1px solid #e5c872;border-radius:6px;padding:12px 14px;margin-top:8px;}
-.kb-caveat h4{color:var(--amb);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-.kb-caveat p{font-size:12px;color:var(--amb);line-height:1.7;}
-.kb-interp{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
-.ki-row{display:flex;align-items:baseline;gap:8px;font-size:12px;padding:5px 8px;border-radius:4px;}
-.ki-row.cur{background:var(--s2);}
-.ki-range{font-family:var(--mono);min-width:80px;flex-shrink:0;}
-.ki-label{color:var(--t2);}
+/* FACTOR CARDS */
+.factor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:700px){.factor-grid{grid-template-columns:1fr;}}
+.fc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:18px;}
+.fc-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.fc-name{font-size:13px;font-weight:400;}
+.fc-ticker{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.06em;}
+.factor-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;}
+.factor-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.factor-strength{flex:1;height:4px;background:var(--s2);border-radius:2px;overflow:hidden;}
+.factor-fill{height:100%;border-radius:2px;}
 
-/* APPROACHES */
-.app-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:20px;margin-bottom:10px;}
-.app-card.rec{border-color:#a5d8b9;border-left:3px solid var(--grn);}
-.app-title{font-size:15px;font-weight:400;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.rec-tag{font-size:10px;background:var(--grn-lt);color:var(--grn);padding:2px 8px;border-radius:100px;}
-.app-desc{font-size:13px;color:var(--t2);line-height:1.75;margin-bottom:8px;}
-.app-pros{font-size:12px;color:var(--grn);margin-bottom:3px;}
-.app-cons{font-size:12px;color:var(--amb);}
-
-/* ACT: ALTERNATIVES */
-.alt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:20px;}
-.alt-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:18px;position:relative;}
-.alt-card.highlighted{border-color:#a5d8b9;border-left:3px solid var(--grn);}
-.alt-card.secondary{opacity:.85;}
-.alt-priority{font-size:10px;font-family:var(--mono);color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
-.alt-card.highlighted .alt-priority{color:var(--grn);}
-.alt-name{font-size:14px;font-weight:400;margin-bottom:6px;}
-.alt-why{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:8px;}
-.alt-when{font-size:11px;color:var(--t3);margin-bottom:8px;}
-.alt-sg{font-size:11px;background:var(--blu-lt);color:var(--blu);border-radius:4px;padding:2px 8px;display:inline-block;font-family:var(--mono);}
-.alt-relevance{font-size:11px;padding:4px 10px;border-radius:4px;margin-bottom:8px;font-weight:400;}
-.ar-high{background:var(--grn-lt);color:var(--grn);}
-.ar-med{background:var(--amb-lt);color:var(--amb);}
-.ar-low{background:var(--s2);color:var(--t3);}
-
-/* CHARTS */
+/* CHART */
 .chart-card{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:22px;margin-bottom:12px;}
-.cht{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;}
-.ctitle{font-size:14px;font-weight:400;}
-.csub{font-size:12px;color:var(--t3);margin-top:2px;}
+.chart-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;}
+.chart-title{font-size:14px;font-weight:400;}
+.chart-sub{font-size:11px;color:var(--t3);margin-top:2px;}
 .leg{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;}
 .li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);}
 .ld{width:12px;height:2.5px;border-radius:1px;}
-.ldd{width:14px;height:0;border-top:1.5px dashed;}
-.cnote{font-size:10px;color:var(--t3);margin-top:10px;line-height:1.6;font-family:var(--mono);}
+.ld-d{width:12px;height:0;border-top:1.5px dashed;}
+.chart-wrap{position:relative;width:100%;}
+.chart-note{font-size:10px;color:var(--t3);margin-top:10px;line-height:1.6;font-family:var(--mono);}
 .rrow{display:flex;gap:4px;}
 .rb{background:none;border:1px solid var(--bdr);font-family:var(--mono);font-size:10px;color:var(--t3);padding:3px 9px;border-radius:4px;cursor:pointer;transition:all .12s;}
 .rb:hover{border-color:var(--bdr2);color:var(--tx);}
 .rb.on{border-color:var(--blu);color:var(--blu);background:var(--blu-lt);}
 
-/* TABLE */
-.tw{border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;}
-.ts{overflow-x:auto;max-height:480px;overflow-y:auto;}
-table{width:100%;border-collapse:collapse;font-size:12px;min-width:680px;}
-thead{position:sticky;top:0;z-index:2;}
-th{background:var(--s2);font-weight:400;font-size:10px;font-family:var(--mono);color:var(--t3);letter-spacing:.05em;padding:8px 12px;text-align:left;border-bottom:1px solid var(--bdr);}
-td{padding:7px 12px;border-bottom:1px solid var(--bdr);}
-tr:last-child td{border-bottom:none;}
-tbody tr:hover td{background:var(--s2);}
-.tr{text-align:right;font-family:var(--mono);}
+/* DATA TABLE */
+.dtbl-wrap{border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;}
+.dtbl-scroll{overflow-x:auto;max-height:500px;overflow-y:auto;}
+.dtbl{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+.dtbl thead{position:sticky;top:0;z-index:2;}
+.dtbl th{background:var(--s2);font-weight:400;font-size:10px;font-family:var(--mono);color:var(--t3);letter-spacing:.05em;padding:8px 12px;text-align:left;border-bottom:1px solid var(--bdr);}
+.dtbl td{padding:7px 12px;border-bottom:1px solid var(--bdr);}
+.dtbl tr:last-child td{border-bottom:none;}
+.dtbl tbody tr:hover td{background:var(--s2);}
 
-.div{border:none;border-top:1px solid var(--bdr);margin:20px 0;}
+/* METHOD */
+.ms{margin-bottom:26px;}
+.ms h2{font-size:16px;font-weight:400;margin-bottom:8px;}
+.ms p{font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:6px;}
+.ms ul{padding-left:16px;}
+.ms li{font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:4px;}
 .src{display:inline-flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--bdr);border-radius:4px;padding:3px 9px;font-size:11px;font-family:var(--mono);color:var(--t2);text-decoration:none;margin:3px;}
 .src:hover{border-color:var(--blu);color:var(--blu);}
+.divider{border:none;border-top:1px solid var(--bdr);margin:22px 0;}
 
-footer{border-top:1px solid var(--bdr);padding:18px 32px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;}
+footer{border-top:1px solid var(--bdr);padding:18px 32px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:flex-start;}
 footer p{font-size:11px;color:var(--t3);line-height:1.7;}
-footer a{color:var(--t2);}footer a:hover{color:var(--blu);}
+footer a{color:var(--t2);}
+footer a:hover{color:var(--blu);}
 
-@media(max-width:680px){
-  .page{padding:18px 14px 60px;}
-  header{padding:0 14px;}
-  .idx-grid{grid-template-columns:1fr;}
-  .kb-grid{grid-template-columns:1fr;}
-  .logo small{display:none;}
-  footer{padding:14px;}
-}
+/* MODAL */
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal-box{background:#fff;border-radius:12px;padding:26px 30px;max-width:600px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18);position:relative;max-height:90vh;overflow-y:auto;}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:var(--t3);cursor:pointer;line-height:1;}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">Index Investor <small>· CSPX · VWRA · Nifty 50</small></div>
+  <div class="logo">Market Signal Dashboard <small>· CSPX · VWRA · Nifty 50</small></div>
   <nav>
-    <button class="nb on" onclick="go('compass',this)">Compass</button>
-    <button class="nb" onclick="go('learn',this)">Learn</button>
-    <button class="nb" onclick="go('act',this)">Act</button>
-    <button class="nb" onclick="go('history',this)">History</button>
+    <button class="nb on" onclick="go('overview',this)">Overview</button>
+    <button class="nb" onclick="go('signals',this)">All Signals</button>
+    <button class="nb" onclick="go('charts',this)">Charts</button>
+    <button class="nb" onclick="go('data',this)">Data Table</button>
+    <button class="nb" onclick="go('method',this)">Methodology</button>
   </nav>
   <div class="hdr-r">
     <span class="hdr-date" id="hdr-date"></span>
-    <button id="rfbtn" onclick="doRefresh()"><span id="ri">↻</span> Refresh</button>
+    <button id="rfbtn" onclick="openModal()">↻ Update data</button>
   </div>
 </header>
 
-<!-- ═══════════════════════════════════════
-     COMPASS — home, reasoning-first
-════════════════════════════════════════ -->
-<div class="page on" id="page-compass">
-  <div id="status"><span>◎ &nbsp;</span><span id="status-msg">Showing cached data — click Refresh to fetch live readings via AI web search.</span></div>
+<!-- ════════════ OVERVIEW ════════════ -->
+<div class="page on" id="page-overview">
+  <div id="status"><span>◎ &nbsp;</span><span id="status-msg">Data as of 22 Mar 2026. Click "Update data" for sources to manually refresh.</span></div>
 
   <div class="ph">
-    <h1>What are markets telling us today?</h1>
-    <p>A monthly check-in for long-term index investors. Read the reasoning below first — numbers follow.</p>
+    <h1>Should I invest now?</h1>
+    <p>Six signals per index. Each scores green / amber / red. Combined into a single temperature score and plain-English verdict.</p>
   </div>
 
-  <!-- THE REASONING BOX — dynamically written -->
-  <div class="reasoning-box" id="reasoning-box">
-    <!-- built by JS -->
-  </div>
+  <!-- THREE VERDICT CARDS -->
+  <div class="verdict-grid" id="verdict-cards"></div>
 
-  <!-- THREE INDEX CARDS -->
   <div class="sec">
-    <div class="sh"><span class="st">Current readings — all three indices</span></div>
-    <div class="idx-grid" id="idx-grid"></div>
-  </div>
-
-  <!-- ALLOCATION BLOCK -->
-  <div class="sec">
-    <div class="sh"><span class="st">Suggested allocation — S&P 500 / CSPX</span></div>
-    <div class="alloc-block" id="alloc-block"></div>
-    <div class="info plain" style="font-size:12px;">
-      <strong>This is a suggested tilt from your baseline, not an absolute target.</strong> If your default is 80/20 equity/bond and the compass says 55/45, consider shifting toward 65/35 — not a full jump. Review annually. Don't react to monthly swings. The compass is based on CAPE and ERP only — it has no knowledge of your personal income, risk tolerance, or time horizon.
+    <div class="sec-hdr"><span class="sec-title">How the score works</span></div>
+    <div class="info green">
+      Each signal scores <strong>2 pts (green = attractive)</strong>, <strong>1 pt (amber = neutral)</strong> or <strong>0 pts (red = expensive)</strong>. Score = total ÷ max × 10. 7–10 = most signals say attractive. 0–3 = most signals say expensive. Hover any signal badge for a plain-English explanation.
+      <br>The 10-year expected return estimate uses: <strong>Earnings Yield + Long-run earnings growth − valuation mean reversion drag</strong>. It is a probabilistic range, not a guarantee.
     </div>
   </div>
 
-  <!-- EXPECTED RETURNS -->
+  <!-- FULL SIGNAL SNAPSHOT TABLE -->
   <div class="sec">
-    <div class="sh">
-      <span class="st">Expected 10-year real annual return — from current CAPE</span>
-    </div>
-    <div class="exp-grid" id="exp-grid"></div>
-    <div class="info blue" style="margin-top:4px;">
-      <strong>How this is calculated:</strong> Using Robert Shiller's regression formula: Expected 10Y real return ≈ <code style="font-family:var(--mono);font-size:11px;background:var(--s3);padding:1px 4px;border-radius:3px">(1 ÷ CAPE) − 1.5%</code>. This formula has historically explained ~60% of actual 10-year real equity returns. It is a probabilistic estimate — not a guarantee. At CAPE 37.5, the formula gives ~1.2% real p.a., meaning after inflation, long-term investors starting today have historically seen very modest real gains over the following decade from this valuation level.
+    <div class="sec-hdr"><span class="sec-title">Signal snapshot — all indices side by side</span></div>
+    <div class="tbl-wrap">
+      <table class="stbl">
+        <thead><tr>
+          <th style="min-width:180px">Signal</th>
+          <th style="text-align:right">CSPX / S&P 500</th><th style="min-width:90px">Zone</th>
+          <th style="text-align:right">VWRA / All-World</th><th style="min-width:90px">Zone</th>
+          <th style="text-align:right">Nifty 50</th><th style="min-width:90px">Zone</th>
+        </tr></thead>
+        <tbody id="snap-tbody"></tbody>
+      </table>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     LEARN — signals + approaches
-════════════════════════════════════════ -->
-<div class="page" id="page-learn">
-  <div class="ph">
-    <h1>Learn — signals &amp; investment approaches</h1>
-    <p>What each signal means, how to read it, and what to do with it. Four investment approaches explained honestly.</p>
-  </div>
+<!-- ════════════ ALL SIGNALS ════════════ -->
+<div class="page" id="page-signals">
+  <div class="ph"><h1>All signals — detail view</h1><p>Every signal for every index, with current reading, historical context, and what it means for your decision.</p></div>
+  <div id="signal-detail"></div>
 
-  <div class="sh" style="margin-bottom:14px;"><span class="st">The four signals — expand any card</span></div>
-  <div id="know-cards"></div>
-
-  <div class="div"></div>
-
-  <div class="sh"><span class="st">Investment approaches — which philosophy fits you?</span></div>
-  <div class="info blue">
-    <strong>There is no universally correct approach.</strong> The best one is the one you will actually stick to through a 40% market crash. Emotional discipline over decades beats optimised allocation by a few percent.
-  </div>
-
-  <div class="app-card">
-    <div class="app-title">1 · Pure passive — set allocation, never time the market</div>
-    <div class="app-desc">Pick an equity/bond split based on your age and risk tolerance (e.g. 80/20). Invest the same amount every month regardless of signals. Rebalance once a year — sell what went up, buy what went down. Never look at CAPE or ERP. This is Jack Bogle's actual recommendation and the most evidence-backed approach for most people.</div>
-    <div class="app-pros">✓ Most academically supported · Lowest time cost · Zero behavioural risk · Bogle's own recommendation</div>
-    <div class="app-cons">✗ No framework for lump-sum decisions · Hard to hold emotionally through crashes · Ignores the rate environment</div>
-  </div>
-
-  <div class="app-card rec">
-    <div class="app-title">2 · Valuation-aware tilting <span class="rec-tag">Recommended starting point</span></div>
-    <div class="app-desc">Same as pure passive, but you shift your equity allocation band based on CAPE. When CAPE is above 30 and ERP is negative (like today), you hold 60–65% equity instead of 80%. When CAPE drops below 20, you shift to 85–90%. You still invest every month — you just tilt the mix. Review once a year.</div>
-    <div class="app-pros">✓ Grounded in Shiller's research · Balances discipline with context · Supported by GMO, Research Affiliates, Vanguard's own studies</div>
-    <div class="app-cons">✗ US CAPE was above 25 from 2014–2024 and still returned 14%/yr — early tilters missed gains · Requires annual conviction to act against the market mood</div>
-  </div>
-
-  <div class="app-card">
-    <div class="app-title">3 · Rule-based glidepath — let a formula decide</div>
-    <div class="app-desc">A mechanical formula replaces judgment. Example: Equity % = 120 − (CAPE × 1.5). At CAPE 37.5, that gives 63.75% equity. At CAPE 20, that gives 90% equity. You update your allocation when the formula says to — not when the market scares you.</div>
-    <div class="app-pros">✓ Removes emotion entirely · Simple to explain · Backtests reasonably well · Unemotional by design</div>
-    <div class="app-cons">✗ The "right" formula is unknowable in advance · Can leave you permanently underweight equities during sustained expensive periods</div>
-  </div>
-
-  <div class="app-card">
-    <div class="app-title">4 · Core + satellite — passive core, valuation-aware satellite</div>
-    <div class="app-desc">Keep 80% of your portfolio in pure passive — never touch it, never look at signals. Use 20% as a satellite where you act on valuations. If you're wrong with the satellite, the core 80% limits the damage. Good for people learning about valuation without betting their whole portfolio on it.</div>
-    <div class="app-pros">✓ Limits downside of being wrong · Lets you develop intuition gradually · Core remains fully disciplined</div>
-    <div class="app-cons">✗ More complex to manage mentally · Satellite may underperform enough to be demoralising · Risk of satellite growing in attention at cost of core</div>
+  <div class="sec">
+    <div class="sec-hdr"><span class="sec-title">Fama-French factor exposure</span></div>
+    <div class="info blue">
+      The <strong>Fama-French five-factor model</strong> shows that long-run returns are driven by exposure to market risk, size (small vs large), value (cheap vs expensive), profitability, and investment conservatism. Cheaper markets have higher <em>expected</em> future returns — but can stay cheap for years. This is why Nifty and VWRA may have higher expected returns than CSPX even though they look "riskier."
+    </div>
+    <div class="factor-grid" id="factor-grid"></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     ACT — contextual alternatives
-════════════════════════════════════════ -->
-<div class="page" id="page-act">
-  <div class="ph">
-    <h1>What should I hold instead?</h1>
-    <p>When most signals are red, the question is not "should I stop investing?" — it is "what do I hold with the portion I'd normally put into equities?" Options below are ranked by relevance to today's signal readings.</p>
-  </div>
-
-  <div id="act-reasoning" class="info green" style="margin-bottom:20px;"></div>
-
-  <div class="sh"><span class="st">Alternative assets — ranked by today's signals</span></div>
-  <div class="alt-grid" id="alt-grid"></div>
-
-  <div class="info red">
-    <strong>What not to do:</strong> Don't go 100% cash waiting for a crash. Don't stop monthly DCA investing. Investors who stay invested through expensive periods still outperform those who try to time exits. The research on this is consistent across decades and markets.
-  </div>
-
-  <div class="div"></div>
-
-  <div class="sh"><span class="st">Singapore-specific options</span></div>
-  <div class="cardp" style="font-size:13px;color:var(--t2);line-height:1.8;">
-    <p style="margin-bottom:8px;"><strong style="color:var(--tx);">Singapore Savings Bonds (SSBs):</strong> Government-guaranteed, no capital loss, redeemable monthly after purchase. Apply via DBS/POSB/OCBC/UOB. Maximum $200,000 per person. Current 10Y average yield: ~3.0–3.3% p.a.</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--tx);">T-bills (6-month):</strong> Currently yielding ~3.5–3.8% p.a. Fully safe, very liquid. Apply via SGX or any major bank. No cap.</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--tx);">ABF Singapore Bond ETF (A35):</strong> Listed on SGX. Tracks a basket of Singapore and Asian government bonds. More liquid than SSBs, with slightly more duration risk.</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--tx);">Syfe Cash+ / MoneyOwl WiseSaver:</strong> Money market funds offering 3–4% p.a. with daily liquidity. Good for emergency fund and short-term parking.</p>
-    <p><strong style="color:var(--tx);">Emergency fund first:</strong> Before adjusting equity/bond allocation, ensure you have 6–12 months of expenses in accessible savings — especially if income stability is uncertain. This is separate from your investment portfolio.</p>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════
-     HISTORY — charts + data table
-════════════════════════════════════════ -->
-<div class="page" id="page-history">
-  <div class="ph"><h1>Historical data</h1><p>Full series for all signals. Use the range buttons to zoom. Data table at the bottom.</p></div>
+<!-- ════════════ CHARTS ════════════ -->
+<div class="page" id="page-charts">
+  <div class="ph"><h1>Historical charts</h1><p>Long-run context for each valuation signal.</p></div>
 
   <div class="chart-card">
-    <div class="cht">
-      <div><div class="ctitle">Shiller CAPE — S&amp;P 500 <span style="font-size:11px;color:var(--t3)">(primary signal · most predictive)</span></div><div class="csub">10-year cyclically adjusted P/E ratio</div></div>
+    <div class="chart-hdr">
+      <div><div class="chart-title">P/E ratio (TTM) — all three indices</div><div class="chart-sub">Trailing 12-month earnings · annual readings</div></div>
       <div class="rrow">
-        <button class="rb on" onclick="setCR(10,this)">10Y</button>
-        <button class="rb" onclick="setCR(20,this)">20Y</button>
-        <button class="rb" onclick="setCR(999,this)">All</button>
+        <button class="rb on" onclick="setPE(5,this)">5Y</button>
+        <button class="rb" onclick="setPE(10,this)">10Y</button>
+        <button class="rb" onclick="setPE(20,this)">20Y</button>
+        <button class="rb" onclick="setPE(999,this)">All</button>
       </div>
     </div>
     <div class="leg">
-      <span class="li"><span class="ld" style="background:var(--blu)"></span>Shiller CAPE</span>
-      <span class="li"><span class="ldd" style="border-color:var(--t3)"></span>Historical median (16×)</span>
-      <span class="li"><span class="ldd" style="border-color:var(--amb)"></span>Expensive threshold (30×)</span>
-    </div>
-    <div style="position:relative;width:100%;height:230px"><canvas id="ch-cape"></canvas></div>
-    <p class="cnote">Source: Robert Shiller / multpl.com. CAPE has only exceeded 35× twice in 150 years of data: 1929 and the 2000 dot-com peak (44×). Current: ~37.5×.</p>
-  </div>
-
-  <div class="chart-card">
-    <div class="cht">
-      <div><div class="ctitle">P/E ratio TTM — all three indices</div><div class="csub">Trailing 12-month earnings</div></div>
-      <div class="rrow">
-        <button class="rb on" onclick="setPR(5,this)">5Y</button>
-        <button class="rb" onclick="setPR(10,this)">10Y</button>
-        <button class="rb" onclick="setPR(20,this)">20Y</button>
-        <button class="rb" onclick="setPR(999,this)">All</button>
-      </div>
-    </div>
-    <div class="leg">
-      <span class="li"><span class="ld" style="background:var(--blu)"></span>CSPX / S&amp;P 500</span>
+      <span class="li"><span class="ld" style="background:var(--blu)"></span>CSPX / S&P 500</span>
       <span class="li"><span class="ld" style="background:var(--grn)"></span>VWRA / All-World</span>
       <span class="li"><span class="ld" style="background:var(--amb)"></span>Nifty 50</span>
     </div>
-    <div style="position:relative;width:100%;height:230px"><canvas id="ch-pe"></canvas></div>
-    <p class="cnote">Nifty pre-2021 = standalone basis (higher by ~20–25%). 2009 S&amp;P 500 excluded (GFC earnings distortion).</p>
+    <div class="chart-wrap" style="height:260px"><canvas id="ch-pe"></canvas></div>
+    <p class="chart-note">CSPX: multpl.com · VWRA: worldperatio.com + Vanguard factsheet · Nifty: NSE India / nifty-pe-ratio.com. Nifty pre-2021 = standalone basis.</p>
   </div>
 
   <div class="chart-card">
-    <div class="cht">
-      <div><div class="ctitle">Equity risk premium (ERP)</div><div class="csub">Earnings yield minus 10Y government bond yield — positive = equities attractive vs bonds</div></div>
+    <div class="chart-hdr">
+      <div><div class="chart-title">Shiller CAPE — S&P 500 &amp; Nifty 50
+        <span class="tip"><span class="tip-i">?</span><span class="tip-box">CAPE uses 10 years of inflation-adjusted earnings to smooth out business cycles. Much more stable than TTM P/E. S&P 500 median: 16×. Nifty historical avg: ~22×. Above these levels = higher starting point, lower expected future returns.</span></span>
+      </div><div class="chart-sub">10-year cyclically adjusted P/E</div></div>
       <div class="rrow">
-        <button class="rb on" onclick="setER(10,this)">10Y</button>
-        <button class="rb" onclick="setER(20,this)">20Y</button>
-        <button class="rb" onclick="setER(999,this)">All</button>
+        <button class="rb on" onclick="setCAPE(10,this)">10Y</button>
+        <button class="rb" onclick="setCAPE(20,this)">20Y</button>
+        <button class="rb" onclick="setCAPE(999,this)">All</button>
       </div>
     </div>
     <div class="leg">
-      <span class="li"><span class="ld" style="background:var(--blu)"></span>S&amp;P 500 ERP (vs US 10Y)</span>
-      <span class="li"><span class="ld" style="background:var(--amb)"></span>Nifty ERP (vs India 10Y)</span>
-      <span class="li"><span class="ldd" style="border-color:var(--t3)"></span>Zero — below = bonds beating equities on yield</span>
+      <span class="li"><span class="ld" style="background:var(--blu)"></span>S&P 500 CAPE</span>
+      <span class="li"><span class="ld" style="background:var(--amb)"></span>Nifty 50 CAPE (est.)</span>
+      <span class="li"><span class="ld-d" style="border-color:var(--t3)"></span>S&P 500 median (16×)</span>
     </div>
-    <div style="position:relative;width:100%;height:230px"><canvas id="ch-erp"></canvas></div>
-    <p class="cnote">Negative ERP means the risk-free bond rate exceeds the equity earnings yield. Currently: S&amp;P 500 ERP ≈ −0.81%, Nifty ERP ≈ −1.82%. This has historically coincided with lower subsequent equity returns.</p>
+    <div class="chart-wrap" style="height:240px"><canvas id="ch-cape"></canvas></div>
+    <p class="chart-note">S&P 500 CAPE: multpl.com / Robert Shiller data. Nifty CAPE estimated from siblisresearch.com and IIM Ahmedabad research. Only beaten near the 2000 dot-com peak (44×) for the S&P 500.</p>
   </div>
 
   <div class="chart-card">
-    <div class="cht">
-      <div><div class="ctitle">Buffett Indicator — US market cap ÷ GDP</div><div class="csub">Normal range: 75–120%. Current: ~210%</div></div>
+    <div class="chart-hdr">
+      <div><div class="chart-title">Equity risk premium — earnings yield vs bond yield
+        <span class="tip"><span class="tip-i">?</span><span class="tip-box">ERP = Earnings Yield (1÷P/E) minus 10Y government bond yield. Above zero = equities offer more than bonds. Below zero = bonds are competitive. A negative ERP for the S&P 500 is historically unusual.</span></span>
+      </div><div class="chart-sub">Earnings yield minus 10Y government bond yield · annual data</div></div>
+      <div class="rrow">
+        <button class="rb on" onclick="setERP(10,this)">10Y</button>
+        <button class="rb" onclick="setERP(20,this)">20Y</button>
+        <button class="rb" onclick="setERP(999,this)">All</button>
+      </div>
     </div>
-    <div class="leg"><span class="li"><span class="ld" style="background:var(--blu)"></span>Buffett Indicator %</span><span class="li"><span class="ldd" style="border-color:var(--t3)"></span>Normal ceiling (120%)</span></div>
-    <div style="position:relative;width:100%;height:200px"><canvas id="ch-bi"></canvas></div>
-    <p class="cnote">Source: gurufocus.com. Has structural upward drift as US companies earn more overseas. Even adjusting for this drift, current levels are historically elevated.</p>
+    <div class="leg">
+      <span class="li"><span class="ld" style="background:var(--blu)"></span>S&P 500 ERP (vs US 10Y)</span>
+      <span class="li"><span class="ld" style="background:var(--grn)"></span>VWRA ERP (vs US 10Y, approx.)</span>
+      <span class="li"><span class="ld" style="background:var(--amb)"></span>Nifty ERP (vs India 10Y)</span>
+      <span class="li"><span class="ld-d" style="border-color:var(--t3)"></span>Zero line</span>
+    </div>
+    <div class="chart-wrap" style="height:240px"><canvas id="ch-erp"></canvas></div>
+    <p class="chart-note">Negative ERP for S&P 500 means US government bonds currently yield more than equities' earnings yield — last seen persistently near the dot-com peak in 2000. VWRA ERP is approximate (multi-currency earnings vs US bond rate).</p>
   </div>
 
-  <div class="sec">
-    <div class="sh"><span class="st">Annual data table</span></div>
-    <div class="info" style="margin-bottom:10px;">
-      <strong>Nifty 50:</strong> Pre-2021 data is on standalone earnings basis (marked S). Post-2021 uses consolidated earnings — ~20–25% higher, so the series is not directly comparable across this boundary.
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div><div class="chart-title">P/B ratio — VWRA &amp; Nifty 50
+        <span class="tip"><span class="tip-i">?</span><span class="tip-box">Price-to-book compares market price to accounting net assets. Cheaper P/B = stronger value factor exposure per Fama-French. High P/B = investors paying up for future growth. VWRA historical avg ~2.5×. Nifty avg ~3.2×.</span></span>
+      </div><div class="chart-sub">Price ÷ book value (net assets)</div></div>
     </div>
-    <div class="tw"><div class="ts">
-      <table>
-        <thead><tr>
-          <th>Year</th>
-          <th class="tr">SP500 P/E</th><th>Zone</th>
-          <th class="tr">CAPE</th><th>Zone</th>
-          <th class="tr">Buffett %</th>
-          <th class="tr">US ERP</th>
-          <th class="tr">All-World P/E</th>
-          <th class="tr">Nifty P/E</th><th>Zone</th>
-          <th class="tr">India ERP</th>
-        </tr></thead>
-        <tbody id="data-tbody"></tbody>
-      </table>
-    </div></div>
-    <p style="font-size:10px;color:var(--t3);margin-top:8px;font-family:var(--mono);line-height:1.6;">Sources: multpl.com · gurufocus.com · worldperatio.com · nifty-pe-ratio.com · NSE India · FRED · TradingEconomics</p>
+    <div class="leg">
+      <span class="li"><span class="ld" style="background:var(--grn)"></span>VWRA / All-World P/B</span>
+      <span class="li"><span class="ld" style="background:var(--amb)"></span>Nifty 50 P/B</span>
+    </div>
+    <div class="chart-wrap" style="height:200px"><canvas id="ch-pb"></canvas></div>
+    <p class="chart-note">VWRA P/B: Vanguard factsheet (monthly). Nifty P/B: NSE India (daily). Historical data estimated from annual index publications.</p>
+  </div>
+</div>
+
+<!-- ════════════ DATA TABLE ════════════ -->
+<div class="page" id="page-data">
+  <div class="ph"><h1>Annual data table</h1><p>Year-by-year readings for all signals. Update the <code style="background:var(--s2);padding:1px 5px;border-radius:3px;font-size:11px;font-family:var(--mono)">LIVE_DATA</code> block in the file to refresh.</p></div>
+  <div class="info">
+    <strong>Nifty note:</strong> Pre-2021 data uses standalone earnings (higher P/E by ~20–25%). Post-2021 uses consolidated earnings. Do not compare directly across this boundary. VWRA P/B and dividend yield data only available from 2019 onwards (Vanguard factsheet history).
+  </div>
+  <div class="dtbl-wrap"><div class="dtbl-scroll">
+    <table class="dtbl">
+      <thead><tr>
+        <th>Year</th>
+        <th class="tr">SP500 P/E</th><th>Zone</th>
+        <th class="tr">CAPE</th><th>Zone</th>
+        <th class="tr">All-World P/E</th><th>Zone</th>
+        <th class="tr">VWRA P/B</th>
+        <th class="tr">VWRA Div%</th>
+        <th class="tr">Nifty P/E</th><th>Zone</th>
+        <th class="tr">Nifty P/B</th>
+        <th class="tr">US ERP</th>
+        <th class="tr">India ERP</th>
+      </tr></thead>
+      <tbody id="data-tbody"></tbody>
+    </table>
+  </div></div>
+  <p style="font-size:10px;color:var(--t3);margin-top:8px;font-family:var(--mono);line-height:1.6;">Sources: multpl.com · worldperatio.com · Vanguard factsheets · nifty-pe-ratio.com · NSE India · FRED. ERP = Earnings yield − 10Y bond yield. (S) = standalone basis.</p>
+</div>
+
+<!-- ════════════ METHODOLOGY ════════════ -->
+<div class="page" id="page-method">
+  <div class="ph"><h1>Methodology &amp; sources</h1><p>Plain-English explanation of every signal, how the composite score works, and why the Fama-French framework matters.</p></div>
+
+  <div class="ms">
+    <h2>The composite score</h2>
+    <p>Each signal scores 2 pts (green = attractive by historical standards), 1 pt (amber = neutral), or 0 pts (red = expensive). Score = (total ÷ max possible) × 10. A score of 7–10 means most signals say the market looks attractive at current prices. A score of 0–3 means most signals say it is expensive. This is not a buy/sell trigger — markets can stay expensive for years.</p>
+  </div>
+  <hr class="divider">
+
+  <div class="ms">
+    <h2>Signal definitions</h2>
+    <ul>
+      <li><strong>P/E ratio (TTM):</strong> Price ÷ trailing 12-month earnings. Simple and widely used, but distorted by one-off earnings events. All three indices have full coverage.</li>
+      <li><strong>Shiller CAPE:</strong> Price ÷ average of 10 years of inflation-adjusted earnings. Much more stable than TTM P/E. S&P 500 median: 16×. Nifty 50 estimated from siblisresearch.com and IIM Ahmedabad research (~22× historical avg). VWRA estimated from country-weighted CAPE data.</li>
+      <li><strong>P/B ratio:</strong> Price ÷ book value (net assets). Connects to the Fama-French value factor — lower P/B = higher value exposure = historically higher expected return. VWRA from Vanguard factsheet (3.4×, Jan 2026). Nifty from NSE India (3.14×).</li>
+      <li><strong>Dividend yield:</strong> Annual dividends ÷ price. Higher yield = cheaper market. VWRA from Vanguard factsheet (1.6%, Jan 2026). Nifty from NSE India (1.35%). Not applicable for CSPX analysis as S&P 500 yield is structurally low.</li>
+      <li><strong>Earnings yield vs bond yield (ERP):</strong> Earnings yield (1÷P/E) minus 10Y government bond yield. Positive = equities offer more than bonds. US ERP currently ~−0.81% — negative for the first time since 2007. India ERP ~−1.82%. VWRA ERP approximate (multi-currency).</li>
+      <li><strong>Buffett Indicator (CSPX only):</strong> Total US stock market cap ÷ GDP. Buffett called it "probably the best single measure of where valuations stand." Currently ~210% — about 2.4 standard deviations above historical trend.</li>
+      <li><strong>Return on Equity — ROE (VWRA):</strong> Measures profitability of underlying companies. Connects to Fama-French profitability factor (RMW). VWRA ROE: 18.7% as of Jan 2026 (Vanguard factsheet). High ROE = quality signal.</li>
+    </ul>
+  </div>
+  <hr class="divider">
+
+  <div class="ms">
+    <h2>10-year expected return estimate</h2>
+    <p>Derived from the Earnings Yield method validated by decades of academic research:</p>
+    <ul>
+      <li><strong>Base return</strong> = 1 ÷ CAPE (or 1 ÷ P/E if CAPE unavailable) × 100%</li>
+      <li><strong>+ Long-run earnings growth</strong> (US: ~2% real; India: ~5–6% real; World: ~2.5% real)</li>
+      <li><strong>− Valuation drag</strong> (if current CAPE far above median, mean reversion reduces returns)</li>
+    </ul>
+    <p>This produces a <em>real</em> (inflation-adjusted) annualised return range. Add expected inflation (~2–3% US, ~4–5% India) for nominal estimate. <strong>This is directional guidance, not a prediction.</strong> Actual returns depend on future earnings, valuations, and macroeconomics.</p>
+  </div>
+  <hr class="divider">
+
+  <div class="ms">
+    <h2>Fama-French factor model</h2>
+    <p>The 1993 Fama-French three-factor model (extended to five factors in 2015) showed that ~90–95% of the difference in returns between diversified portfolios is explained by exposure to five systematic risk factors: market, size (small vs large), value (cheap vs expensive), profitability, and investment conservatism.</p>
+    <p>For long-term investors, this means: <strong>cheaper markets (lower P/E, P/B) have higher expected future returns</strong>, not lower. VWRA's ~30% discount to S&P 500 P/E and Nifty's lower P/B both represent stronger value factor exposure — and therefore, by Fama-French logic, higher expected long-run returns.</p>
+    <p>The caveat: higher expected return comes with higher perceived risk and uncertainty. Markets price in this risk, which is why cheap markets stay cheap.</p>
+  </div>
+  <hr class="divider">
+
+  <div class="ms">
+    <h2>Data sources</h2>
+    <div style="margin-top:6px;">
+      <a class="src" href="https://www.multpl.com/s-p-500-pe-ratio/table/by-year" target="_blank">↗ multpl.com — S&P 500 P/E & CAPE</a>
+      <a class="src" href="https://worldperatio.com/area/all-world/" target="_blank">↗ worldperatio.com — All-World P/E</a>
+      <a class="src" href="https://fund-docs.vanguard.com/FTSE_All-World_UCITS_ETF_USD_Accumulating_9679_EU_INT_UK_EN.pdf" target="_blank">↗ Vanguard factsheet — VWRA P/B, yield, ROE</a>
+      <a class="src" href="https://nifty-pe-ratio.com" target="_blank">↗ nifty-pe-ratio.com — Nifty P/E, P/B, yield</a>
+      <a class="src" href="https://siblisresearch.com/data/cape-ratio-india-nifty/" target="_blank">↗ siblisresearch.com — Nifty CAPE</a>
+      <a class="src" href="https://www.gurufocus.com/stock-market-valuations.php" target="_blank">↗ gurufocus.com — Buffett Indicator</a>
+      <a class="src" href="https://fred.stlouisfed.org/series/DGS10" target="_blank">↗ FRED — US 10Y Treasury</a>
+      <a class="src" href="https://tradingeconomics.com/india/government-bond-yield" target="_blank">↗ TradingEconomics — India 10Y G-Sec</a>
+      <a class="src" href="https://capeindia.iima.ac.in/" target="_blank">↗ IIM Ahmedabad — India CAPE research</a>
+    </div>
+  </div>
+  <hr class="divider">
+  <div class="ms">
+    <p style="font-size:12px;color:var(--t3);">For <strong style="color:var(--t2)">informational purposes only</strong>. Not financial advice. Historical patterns do not guarantee future returns. Consult a qualified financial adviser before making investment decisions.</p>
   </div>
 </div>
 
 <footer>
   <div>
-    <p>Index Investor Dashboard · CSPX · VWRA · Nifty 50</p>
+    <p>Market Signal Dashboard · CSPX · VWRA · Nifty 50</p>
     <p><a href="https://multpl.com" target="_blank">multpl.com</a> · <a href="https://worldperatio.com" target="_blank">worldperatio.com</a> · <a href="https://nifty-pe-ratio.com" target="_blank">nifty-pe-ratio.com</a> · <a href="https://gurufocus.com" target="_blank">gurufocus.com</a> · <a href="https://fred.stlouisfed.org" target="_blank">FRED</a></p>
-    <p>For informational use only · Not financial advice · <span id="footer-date"></span></p>
+    <p style="margin-top:3px;">For informational use only · Not financial advice</p>
   </div>
+  <p>Updated <span id="footer-date">22 Mar 2026</span></p>
 </footer>
 
+<!-- UPDATE MODAL -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div style="font-family:var(--mono);font-size:13px;font-weight:500;margin-bottom:4px;">How to update the data</div>
+    <p style="font-size:12px;color:var(--t2);margin-bottom:18px;line-height:1.6;">Open each source, read the number, then edit the <code style="background:var(--s2);padding:1px 5px;border-radius:3px;">LIVE_DATA</code> block at the top of the &lt;script&gt; section in index.html.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;font-size:12px;">
+      <div style="background:var(--s2);border-radius:8px;padding:12px 14px;">
+        <div style="font-weight:500;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Data sources</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-family:var(--mono);color:var(--blu);min-width:55px;font-size:11px;">pe_c</span><span style="color:var(--t2);flex:1;">S&P 500 TTM P/E</span><a href="https://www.multpl.com/s-p-500-pe-ratio" target="_blank" style="font-size:11px;color:var(--blu);">multpl.com ↗</a></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-family:var(--mono);color:var(--blu);min-width:55px;font-size:11px;">cape_c</span><span style="color:var(--t2);flex:1;">Shiller CAPE (S&P 500)</span><a href="https://www.multpl.com/shiller-pe" target="_blank" style="font-size:11px;color:var(--blu);">multpl.com ↗</a></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-family:var(--mono);color:var(--blu);min-width:55px;font-size:11px;">bi</span><span style="color:var(--t2);flex:1;">Buffett Indicator (%)</span><a href="https://www.gurufocus.com/stock-market-valuations.php" target="_blank" style="font-size:11px;color:var(--blu);">gurufocus.com ↗</a></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-family:var(--mono);color:var(--blu);min-width:55px;font-size:11px;">ub</span><span style="color:var(--t2);flex:1;">US 10Y Treasury yield (%)</span><a href="https://fred.stlouisfed.org/series/DGS10" target="_blank" style="font-size:11px;color:var(--blu);">FRED ↗</a></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-family:var(--mono);color:var(--blu);min-width:55px;font-size:11px;">pe_v</span><span style="color:var(--t2);flex:1;">FTSE All-World P/E</span><a href="https://worldperatio.com/area/all-world/" target="_blank" style="font-size:11px;color:var(--blu);">worldperatio.com ↗</a></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-family:var(--mono);color:var(--blu);min-width:55px;font-size:11px;">pb_v, dy_v</span><span style="color:var(--t2);flex:1;">VWRA P/B ratio &amp; dividend yield</span><a href="https://fund-docs.vanguard.com/FTSE_All-World_UCITS_ETF_USD_Accumulating_9679_EU_INT_UK_EN.pdf" target="_blank" style="font-size:11px;color:var(--blu);">Vanguard factsheet ↗</a></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-family:var(--mono);color:var(--blu);min-width:55px;font-size:11px;">pe_n, pb_n, dy_n</span><span style="color:var(--t2);flex:1;">Nifty P/E, P/B, dividend yield</span><a href="https://nifty-pe-ratio.com" target="_blank" style="font-size:11px;color:var(--blu);">nifty-pe-ratio.com ↗</a></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-family:var(--mono);color:var(--blu);min-width:55px;font-size:11px;">ib</span><span style="color:var(--t2);flex:1;">India 10Y G-Sec yield (%)</span><a href="https://tradingeconomics.com/india/government-bond-yield" target="_blank" style="font-size:11px;color:var(--blu);">TradingEconomics ↗</a></div>
+        </div>
+      </div>
+      <div style="background:var(--s2);border-radius:8px;padding:12px 14px;">
+        <div style="font-weight:500;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Edit index.html — find this block</div>
+        <pre style="background:var(--tx);color:#c8f0b0;font-size:11px;padding:12px;border-radius:6px;overflow-x:auto;line-height:1.7;font-family:var(--mono);">const LIVE_DATA = {
+  pe_c:27.89, cape_c:37.5, bi:210, ub:4.39,
+  pe_v:22.90, pb_v:3.40,  dy_v:1.60,
+  pe_n:20.23, pb_n:3.14,  dy_n:1.35, ib:6.76,
+  as_of:'22 Mar 2026',
+};</pre>
+      </div>
+      <div style="background:var(--s2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.6;">
+        <strong style="color:var(--tx);">Then on GitHub:</strong> open index.html → click the pencil ✏ icon → paste updated values → click <strong>Commit changes</strong>. Site updates in ~60 seconds.
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button onclick="closeModal()" style="background:var(--tx);color:#fff;border:none;font-family:var(--font);font-size:13px;padding:8px 20px;border-radius:6px;cursor:pointer;">Got it</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ═══════════════════════════════════════
-// DATA
-// ═══════════════════════════════════════
-const HIST=[
-  {y:2026,pe_c:27.89,pe_v:21.04,pe_n:20.23,cape:37.5,bi:210,ub:4.39,ib:6.76},
-  {y:2025,pe_c:28.16,pe_v:21.34,pe_n:22.40,cape:38.0,bi:195,ub:4.25,ib:6.85},
-  {y:2024,pe_c:25.01,pe_v:19.80,pe_n:22.70,cape:32.5,bi:180,ub:4.00,ib:7.10},
-  {y:2023,pe_c:22.82,pe_v:17.90,pe_n:22.20,cape:29.5,bi:170,ub:3.88,ib:7.35},
-  {y:2022,pe_c:23.11,pe_v:14.50,pe_n:23.70,cape:28.5,bi:175,ub:1.52,ib:6.83},
-  {y:2021,pe_c:35.96,pe_v:24.20,pe_n:32.10,cape:38.3,bi:185,ub:0.93,ib:6.22},
-  {y:2020,pe_c:24.88,pe_v:18.30,pe_n:37.30,cape:26.5,bi:145,ub:0.68,ib:5.97},
-  {y:2019,pe_c:19.60,pe_v:15.20,pe_n:24.60,cape:29.7,bi:142,ub:2.14,ib:6.52},
-  {y:2018,pe_c:24.97,pe_v:16.80,pe_n:26.50,cape:33.3,bi:148,ub:2.41,ib:7.17},
-  {y:2017,pe_c:23.59,pe_v:17.50,pe_n:23.40,cape:28.1,bi:132,ub:2.45,ib:6.41},
-  {y:2016,pe_c:22.18,pe_v:16.10,pe_n:22.10,cape:26.5,bi:124,ub:1.84,ib:6.57},
-  {y:2015,pe_c:20.02,pe_v:15.40,pe_n:22.60,cape:26.5,bi:125,ub:2.17,ib:7.73},
-  {y:2014,pe_c:18.15,pe_v:14.90,pe_n:20.70,cape:25.8,bi:115,ub:3.03,ib:8.51},
-  {y:2013,pe_c:17.03,pe_v:13.80,pe_n:17.50,cape:22.4,bi:102,ub:1.76,ib:7.89},
-  {y:2012,pe_c:14.87,pe_v:12.20,pe_n:17.60,cape:20.6,bi:95, ub:1.89,ib:8.20},
-  {y:2011,pe_c:16.30,pe_v:12.80,pe_n:18.70,cape:21.5,bi:100,ub:2.78,ib:8.53},
-  {y:2010,pe_c:20.70,pe_v:15.60,pe_n:22.40,cape:20.3,bi:105,ub:3.22,ib:7.90},
-  {y:2008,pe_c:21.46,pe_v:13.90,pe_n:12.70,cape:20.6,bi:78, ub:3.66,ib:7.93},
-  {y:2007,pe_c:17.36,pe_v:15.20,pe_n:26.50,cape:25.5,bi:110,ub:4.63,ib:7.81},
-  {y:2006,pe_c:18.07,pe_v:15.80,pe_n:20.90,cape:26.8,bi:110,ub:4.71,ib:7.59},
-  {y:2005,pe_c:19.99,pe_v:16.20,pe_n:17.70,cape:26.5,bi:102,ub:4.29,ib:7.12},
-  {y:2004,pe_c:22.73,pe_v:18.10,pe_n:16.00,cape:25.9,bi:95, ub:4.27,ib:6.88},
-  {y:2001,pe_c:27.55,pe_v:20.40,pe_n:15.60,cape:33.5,bi:102,ub:5.02,ib:9.11},
-  {y:2000,pe_c:29.04,pe_v:21.50,pe_n:19.60,cape:43.8,bi:130,ub:6.03,ib:10.50},
-  {y:1999,pe_c:32.92,pe_v:23.00,pe_n:null, cape:40.6,bi:115,ub:5.65,ib:null},
-  {y:1998,pe_c:24.29,pe_v:17.40,pe_n:null, cape:32.6,bi:95, ub:5.26,ib:null},
-  {y:1997,pe_c:19.53,pe_v:15.10,pe_n:null, cape:28.3,bi:82, ub:6.35,ib:null},
-  {y:1996,pe_c:18.08,pe_v:14.30,pe_n:null, cape:24.1,bi:72, ub:6.44,ib:null},
-  {y:1995,pe_c:14.89,pe_v:12.40,pe_n:null, cape:18.0,bi:60, ub:5.58,ib:null},
+// ════════════════════════════════════════════════════
+// ▼▼▼  UPDATE THIS BLOCK TO REFRESH DATA  ▼▼▼
+// ════════════════════════════════════════════════════
+const LIVE_DATA = {
+  // CSPX / S&P 500
+  pe_c:  27.89,  // multpl.com/s-p-500-pe-ratio
+  cape_c: 37.5,  // multpl.com/shiller-pe
+  bi:    210,    // gurufocus.com/stock-market-valuations.php (%)
+  ub:    4.39,   // FRED: fred.stlouisfed.org/series/DGS10 (%)
+
+  // VWRA / FTSE All-World  ← Vanguard factsheet (monthly PDF)
+  pe_v:  22.90,  // worldperatio.com  (current: 21.04 from worldperatio, 22.9 from Vanguard Jan factsheet)
+  pb_v:  3.40,   // Vanguard VWRA factsheet → "Price/book ratio"
+  dy_v:  1.60,   // Vanguard VWRA factsheet → "Equity yield (dividend)"
+  roe_v: 18.7,   // Vanguard VWRA factsheet → "Return on equity"
+
+  // Nifty 50  ← nifty-pe-ratio.com
+  pe_n:  20.23,  // nifty-pe-ratio.com (TTM consolidated)
+  cape_n: 30.0,  // siblisresearch.com / IIM Ahmedabad (estimated current)
+  pb_n:  3.14,   // nifty-pe-ratio.com
+  dy_n:  1.35,   // nifty-pe-ratio.com (%)
+  ib:    6.76,   // tradingeconomics.com/india/government-bond-yield (%)
+
+  as_of: '22 Mar 2026',
+};
+// ▲▲▲  THAT'S THE ONLY BLOCK YOU EVER NEED TO EDIT  ▲▲▲
+// ════════════════════════════════════════════════════
+
+// ── HISTORICAL DATA (edit only to correct errors) ──
+const HIST = [
+  {y:2026,...LIVE_DATA},
+  {y:2025,pe_c:28.16,cape_c:38.0,bi:195,ub:4.25,pe_v:21.34,pb_v:3.60,dy_v:1.40,roe_v:17.8,pe_n:22.40,cape_n:32.0,pb_n:3.70,dy_n:1.20,ib:6.85},
+  {y:2024,pe_c:25.01,cape_c:32.5,bi:180,ub:4.00,pe_v:19.80,pb_v:3.40,dy_v:1.50,roe_v:16.9,pe_n:22.70,cape_n:33.0,pb_n:3.80,dy_n:1.18,ib:7.10},
+  {y:2023,pe_c:22.82,cape_c:29.5,bi:170,ub:3.88,pe_v:17.90,pb_v:2.95,dy_v:1.70,roe_v:15.5,pe_n:22.20,cape_n:30.0,pb_n:3.80,dy_n:1.20,ib:7.35},
+  {y:2022,pe_c:23.11,cape_c:28.5,bi:175,ub:1.52,pe_v:14.50,pb_v:2.50,dy_v:2.10,roe_v:14.2,pe_n:23.70,cape_n:28.5,pb_n:4.10,dy_n:1.12,ib:6.83},
+  {y:2021,pe_c:35.96,cape_c:38.3,bi:185,ub:0.93,pe_v:24.20,pb_v:3.10,dy_v:1.60,roe_v:13.8,pe_n:32.10,cape_n:35.0,pb_n:4.55,dy_n:1.00,ib:6.22},
+  {y:2020,pe_c:24.88,cape_c:26.5,bi:145,ub:0.68,pe_v:18.30,pb_v:2.40,dy_v:2.00,roe_v:11.2,pe_n:37.30,cape_n:28.0,pb_n:3.40,dy_n:1.48,ib:5.97},
+  {y:2019,pe_c:19.60,cape_c:29.7,bi:142,ub:2.14,pe_v:15.20,pb_v:2.30,dy_v:2.30,roe_v:12.6,pe_n:24.60,cape_n:25.0,pb_n:3.35,dy_n:1.28,ib:6.52},
+  {y:2018,pe_c:24.97,cape_c:33.3,bi:148,ub:2.41,pe_v:16.80,pb_v:2.20,dy_v:2.50,roe_v:13.1,pe_n:26.50,cape_n:26.0,pb_n:3.60,dy_n:1.15,ib:7.17},
+  {y:2017,pe_c:23.59,cape_c:28.1,bi:132,ub:2.45,pe_v:17.50,pb_v:2.15,dy_v:2.40,roe_v:12.8,pe_n:23.40,cape_n:24.0,pb_n:3.40,dy_n:1.22,ib:6.41},
+  {y:2016,pe_c:22.18,cape_c:26.5,bi:124,ub:1.84,pe_v:16.10,pb_v:1.95,dy_v:2.60,roe_v:11.9,pe_n:22.10,cape_n:22.0,pb_n:3.20,dy_n:1.30,ib:6.57},
+  {y:2015,pe_c:20.02,cape_c:26.5,bi:125,ub:2.17,pe_v:15.40,pb_v:2.00,dy_v:2.50,roe_v:12.2,pe_n:22.60,cape_n:22.5,pb_n:3.40,dy_n:1.20,ib:7.73},
+  {y:2014,pe_c:18.15,cape_c:25.8,bi:115,ub:3.03,pe_v:14.90,pb_v:1.85,dy_v:2.70,roe_v:11.8,pe_n:20.70,cape_n:20.0,pb_n:3.30,dy_n:1.26,ib:8.51},
+  {y:2013,pe_c:17.03,cape_c:22.4,bi:102,ub:1.76,pe_v:13.80,pb_v:1.70,dy_v:2.90,roe_v:11.0,pe_n:17.50,cape_n:18.0,pb_n:3.10,dy_n:1.50,ib:7.89},
+  {y:2012,pe_c:14.87,cape_c:20.6,bi:95, ub:1.89,pe_v:12.20,pb_v:1.55,dy_v:3.20,roe_v:10.2,pe_n:17.60,cape_n:16.0,pb_n:2.90,dy_n:1.60,ib:8.20},
+  {y:2011,pe_c:16.30,cape_c:21.5,bi:100,ub:2.78,pe_v:12.80,pb_v:null,dy_v:null,roe_v:null,pe_n:18.70,cape_n:17.5,pb_n:3.10,dy_n:1.45,ib:8.53},
+  {y:2010,pe_c:20.70,cape_c:20.3,bi:105,ub:3.22,pe_v:15.60,pb_v:null,dy_v:null,roe_v:null,pe_n:22.40,cape_n:19.0,pb_n:3.20,dy_n:1.35,ib:7.90},
+  {y:2008,pe_c:21.46,cape_c:20.6,bi:78, ub:3.66,pe_v:13.90,pb_v:null,dy_v:null,roe_v:null,pe_n:12.70,cape_n:14.0,pb_n:null,dy_n:null,ib:7.93},
+  {y:2007,pe_c:17.36,cape_c:25.5,bi:110,ub:4.63,pe_v:15.20,pb_v:null,dy_v:null,roe_v:null,pe_n:26.50,cape_n:22.0,pb_n:null,dy_n:null,ib:7.81},
+  {y:2006,pe_c:18.07,cape_c:26.8,bi:110,ub:4.71,pe_v:15.80,pb_v:null,dy_v:null,roe_v:null,pe_n:20.90,cape_n:20.0,pb_n:null,dy_n:null,ib:7.59},
+  {y:2005,pe_c:19.99,cape_c:26.5,bi:102,ub:4.29,pe_v:16.20,pb_v:null,dy_v:null,roe_v:null,pe_n:17.70,cape_n:17.0,pb_n:null,dy_n:null,ib:7.12},
+  {y:2004,pe_c:22.73,cape_c:25.9,bi:95, ub:4.27,pe_v:18.10,pb_v:null,dy_v:null,roe_v:null,pe_n:16.00,cape_n:15.0,pb_n:null,dy_n:null,ib:6.88},
+  {y:2001,pe_c:27.55,cape_c:33.5,bi:102,ub:5.02,pe_v:20.40,pb_v:null,dy_v:null,roe_v:null,pe_n:15.60,cape_n:null,pb_n:null,dy_n:null,ib:9.11},
+  {y:2000,pe_c:29.04,cape_c:43.8,bi:130,ub:6.03,pe_v:21.50,pb_v:null,dy_v:null,roe_v:null,pe_n:19.60,cape_n:null,pb_n:null,dy_n:null,ib:10.50},
 ];
 
-let L={...HIST[0]};
+let L = {...LIVE_DATA};
 
-// ═══════════════════════════════════════
-// DERIVED VALUES
-// ═══════════════════════════════════════
-function erp_c(l){return +(1/l.pe_c*100-l.ub).toFixed(2);}
-function erp_v(l){return +(1/l.pe_v*100-l.ub).toFixed(2);}
-function erp_n(l){return l.pe_n&&l.ib?+(1/l.pe_n*100-l.ib).toFixed(2):null;}
-function exp10y(cape){return +Math.max(-2,Math.min(((1/cape)-0.015)*100,15)).toFixed(1);}
+// ── CLASSIFY HELPERS ──
+const ZC = {
+  pe_c:  {b:[14,22,28], l:['Cheap','Fair','Elevated','Expensive'], z:['zb','zg','za','zr']},
+  cape_c:{b:[20,30,38], l:['Fair','Elevated','Expensive','Extreme'], z:['zg','za','zr','zr']},
+  bi:    {b:[90,130,175],l:['Fair','Elevated','Expensive','Extreme'],z:['zg','za','zr','zr']},
+  pe_v:  {b:[14,19,24], l:['Cheap','Fair','Elevated','Expensive'], z:['zb','zg','za','zr']},
+  pb_v:  {b:[2.0,2.8,3.8],l:['Cheap','Fair','Elevated','Expensive'],z:['zb','zg','za','zr']},
+  dy_v:  {b:[1.2,1.8,2.5,99],l:['Low','Neutral','Attractive','High yield'],z:['zr','za','zg','zg'], inv:true},
+  pe_n:  {b:[17,24,28], l:['Undervalued','Fairly Valued','Caution','Danger'], z:['zb','zg','za','zr']},
+  cape_n:{b:[20,28,36], l:['Fair','Elevated','Expensive','Extreme'], z:['zg','za','zr','zr']},
+  pb_n:  {b:[2.5,3.5,4.5],l:['Cheap','Fair','Elevated','Expensive'],z:['zb','zg','za','zr']},
+  dy_n:  {b:[1.0,1.5,2.5,99],l:['Low','Neutral','Attractive','High yield'],z:['zr','za','zg','zg'], inv:true},
+};
 
-// Allocation model: based on CAPE + ERP
-function allocModel(cape,erp){
-  let eq=cape<15?92:cape<20?84:cape<25?76:cape<30?68:cape<35?62:55;
-  if(erp<0)eq=Math.max(eq-8,40);
-  else if(erp<1)eq=Math.max(eq-4,45);
-  else if(erp>3)eq=Math.min(eq+5,95);
-  return{eq:Math.round(eq),bond:Math.round(100-eq)};
-}
-
-// Zone classifiers
-function zc(pe,bands,lbls,clss){for(let i=0;i<bands.length;i++)if(pe<bands[i])return{l:lbls[i],c:clss[i]};return{l:lbls[lbls.length-1],c:clss[clss.length-1]};}
-function zCape(v){return zc(v,[20,30,999],['Fair','Elevated','Expensive'],['zg','za','zr']);}
-function zPEc(v){return zc(v,[14,22,28,999],['Cheap','Fair','Elevated','Expensive'],['zb','zg','za','zr']);}
-function zPEv(v){return zc(v,[12,18,23,999],['Cheap','Fair','Elevated','Expensive'],['zb','zg','za','zr']);}
-function zPEn(v){if(!v)return{l:'—',c:'zn'};return zc(v,[17,24,28,999],['Undervalued','Fairly Valued','Caution','Danger'],['zb','zg','za','zr']);}
-function zBI(v){return zc(v,[90,130,999],['Fair','Elevated','Strongly OV'],['zg','za','zr']);}
-
-// ═══════════════════════════════════════
-// REASONING — the core of the tool
-// ═══════════════════════════════════════
-function buildReasoning(){
-  const cape=L.cape, erp=erp_c(L), erp_n_val=erp_n(L);
-  const {eq,bond}=allocModel(cape,erp);
-  const exp=exp10y(cape);
-  const ey=(1/L.pe_c*100).toFixed(2);
-
-  // Determine overall tone
-  const isCautious=cape>30&&erp<0;
-  const isNeutral=cape>24&&cape<=30||erp>=0&&erp<2;
-  const isAttractive=cape<24&&erp>2;
-
-  let headline, tone, bullets;
-
-  if(isCautious){
-    headline='Most signals suggest caution on US equities right now.';
-    tone='red';
-    bullets=[
-      {icon:'📉',text:`<strong>CAPE is ${cape.toFixed(1)}×</strong>, well above the 150-year median of 16×. Based on Shiller's regression, this implies expected real returns of around <strong>${exp}% per year</strong> over the next decade — historically very modest. The last time CAPE was this high was the 2000 dot-com peak.`},
-      {icon:'💰',text:`<strong>Bonds are currently out-yielding equity earnings.</strong> The S&P 500 earnings yield is ${ey}% (= 1 ÷ P/E), but US 10-year Treasuries pay ${L.ub.toFixed(2)}%. The equity risk premium is <strong>${erp.toFixed(2)}%</strong> — negative, meaning you earn more on a risk-free government bond than on equities at current prices. Historically, negative ERP has preceded periods of lower equity returns.`},
-      {icon:'📊',text:`<strong>The Buffett Indicator is ${L.bi.toFixed(0)}%</strong>, meaning US stocks are worth more than twice the entire US economy. The historical "normal" range is 75–120%. Even adjusting for structural drift upward over time, this is historically elevated.`},
-      {icon:'🌏',text:`<strong>VWRA and Nifty look meaningfully cheaper than CSPX.</strong> VWRA (All-World) trades at ${L.pe_v.toFixed(2)}× P/E — about ${Math.round((1-L.pe_v/L.pe_c)*100)}% cheaper than the S&P 500. Nifty 50 is at ${L.pe_n.toFixed(2)}× — fairly valued by historical standards. If you want equity exposure, global diversification via VWRA dilutes the expensive US premium.`},
-    ];
-  } else if(isAttractive){
-    headline='Signals are broadly constructive — equities look reasonably valued.';
-    tone='green';
-    bullets=[
-      {icon:'📈',text:`<strong>CAPE is ${cape.toFixed(1)}×</strong> — within a historically normal range. Shiller's regression implies expected real returns of around <strong>${exp}% per year</strong> over the next decade, which is reasonable for long-term investors.`},
-      {icon:'💰',text:`<strong>Equities offer reasonable compensation vs bonds.</strong> The S&P 500 earnings yield is ${ey}%, and the equity risk premium vs US 10Y bonds is <strong>+${erp.toFixed(2)}%</strong> — positive, meaning equities are offering extra return for the extra risk they carry.`},
-      {icon:'📊',text:`<strong>Buffett Indicator is ${L.bi.toFixed(0)}%</strong> — still above historical norms, so this signal remains a caution. But it's not at the extreme levels seen in 2021 (185%) or today's peak. Use this as a reminder to stay globally diversified rather than fully US-concentrated.`},
-    ];
-  } else {
-    headline='Signals are mixed — elevated valuations, but bonds are not clearly superior.';
-    tone='amber';
-    bullets=[
-      {icon:'📉',text:`<strong>CAPE is ${cape.toFixed(1)}×</strong>, above the long-run median but not at extreme levels. Shiller's regression implies expected real returns of around <strong>${exp}% per year</strong> over the next decade — below historical averages, but not near zero.`},
-      {icon:'💰',text:`<strong>The equity risk premium is ${erp>=0?'+':''}${erp.toFixed(2)}%</strong>. ${erp>0?`Equities are still offering slightly more than bonds — the compensation for equity risk is thin but positive.`:`Bonds are now slightly out-yielding equities on a pure yield basis — a signal to be somewhat cautious, particularly for lump-sum investments.`}`},
-      {icon:'🌏',text:`<strong>Global diversification continues to make sense.</strong> VWRA (All-World) at ${L.pe_v.toFixed(2)}× and Nifty at ${L.pe_n?.toFixed(2)||'—'}× both trade at lower multiples than the S&P 500, offering a cheaper entry into equity exposure.`},
-    ];
+function classify(key, val) {
+  if(val === null || val === undefined) return {l:'N/A', z:'zn', pts:1};
+  const cfg = ZC[key];
+  for(let i=0;i<cfg.b.length;i++) {
+    if(val < cfg.b[i]) return {l:cfg.l[i], z:cfg.z[i], pts: cfg.z[i]==='zg'||cfg.z[i]==='zb'?2:cfg.z[i]==='za'?1:0};
   }
-
-  const borderColor=tone==='red'?'var(--red)':tone==='green'?'var(--grn)':'var(--amb)';
-  const box=document.getElementById('reasoning-box');
-  box.style.borderLeft=`3px solid ${borderColor}`;
-  box.innerHTML=`
-    <div class="rb-eyebrow">Signal summary · ${new Date().toLocaleDateString('en-SG',{day:'numeric',month:'long',year:'numeric'})}</div>
-    <div class="rb-headline">${headline}</div>
-    <div class="rb-bullets">${bullets.map(b=>`
-      <div class="rb-bullet">
-        <span class="rb-bullet-icon">${b.icon}</span>
-        <span>${b.text}</span>
-      </div>`).join('')}
-    </div>
-    <hr class="rb-divider">
-    <div class="rb-formula">
-      <strong>Why ${eq}% equity / ${bond}% bonds?</strong><br>
-      The suggested allocation is derived from two signals: <strong>CAPE ${cape.toFixed(1)}×</strong> (which sets a base equity % by comparing current valuation to historical ranges) and <strong>ERP ${erp>=0?'+':''}${erp.toFixed(2)}%</strong> (which adjusts it further based on how equities compare to bonds today). At CAPE ${cape.toFixed(1)}, the base equity allocation is ~${cape<15?92:cape<20?84:cape<25?76:cape<30?68:cape<35?62:55}%. The negative ERP subtracts a further ~8 percentage points, giving ~${eq}%. This is a <em>suggested tilt from your personal baseline</em> — not an absolute number. If your default is 80% equity, consider moving toward ${Math.round(Math.min(eq+8,80))}% rather than jumping to ${eq}%.
-    </div>`;
+  const last = cfg.l.length-1;
+  return {l:cfg.l[last], z:cfg.z[last], pts: cfg.z[last]==='zg'||cfg.z[last]==='zb'?2:cfg.z[last]==='za'?1:0};
 }
 
-// ═══════════════════════════════════════
-// INDEX CARDS
-// ═══════════════════════════════════════
-function buildIdxGrid(){
-  const g=document.getElementById('idx-grid');g.innerHTML='';
-  const items=[
-    {key:'cspx',cls:'c-blu',ticker:'CSPX · LSE · USD',name:'iShares Core S&P 500 UCITS ETF',
-     pe:L.pe_c,pez:zPEc(L.pe_c),
-     sigs:[
-       {n:'Shiller CAPE',v:L.cape.toFixed(1)+'×',z:zCape(L.cape)},
-       {n:'Buffett Indicator',v:L.bi.toFixed(0)+'%',z:zBI(L.bi)},
-       {n:'Equity risk premium',v:(erp_c(L)>=0?'+':'')+erp_c(L).toFixed(2)+'%',z:{c:erp_c(L)>2?'zg':erp_c(L)>0?'za':'zr',l:erp_c(L)>2?'Attractive':erp_c(L)>0?'Marginal':'Negative'}},
-     ]},
-    {key:'vwra',cls:'c-grn',ticker:'VWRA · LSE · USD',name:'Vanguard FTSE All-World UCITS ETF',
-     pe:L.pe_v,pez:zPEv(L.pe_v),
-     sigs:[
-       {n:'vs S&P 500 discount',v:Math.round((1-L.pe_v/L.pe_c)*100)+'% cheaper',z:{c:'zg',l:'More affordable'}},
-       {n:'Equity risk premium',v:(erp_v(L)>=0?'+':'')+erp_v(L).toFixed(2)+'%',z:{c:erp_v(L)>2?'zg':erp_v(L)>0?'za':'zr',l:erp_v(L)>2?'Attractive':erp_v(L)>0?'Marginal':'Negative'}},
-       {n:'20Y average P/E',v:'14.9×',z:{c:'zn',l:'Reference'}},
-     ]},
-    {key:'nifty',cls:'c-amb',ticker:'NIFTY 50 · NSE · INR',name:'NSE India Index (Consolidated)',
-     pe:L.pe_n||0,pez:zPEn(L.pe_n),
-     sigs:[
-       {n:'P/B ratio',v:'3.14×',z:{c:'za',l:'Moderate'}},
-       {n:'Dividend yield',v:'1.35%',z:{c:'za',l:'Neutral'}},
-       {n:'India ERP',v:(erp_n(L)>=0?'+':'')+erp_n(L)?.toFixed(2)+'%',z:{c:erp_n(L)>1?'zg':erp_n(L)>0?'za':'zr',l:erp_n(L)>1?'Attractive':erp_n(L)>0?'Marginal':'Negative'}},
-     ]},
-  ];
-  items.forEach(d=>{
-    g.innerHTML+=`<div class="idx-card ${d.cls}">
-      <div class="ic-ticker">${d.ticker}</div>
-      <div class="ic-name">${d.name}</div>
-      <div class="ic-pe">${d.pe.toFixed(2)}</div>
-      <div class="ic-row">
-        <span style="font-size:12px;color:var(--t3)">P/E TTM</span>
-        <span class="z ${d.pez.c}">${d.pez.l}</span>
-      </div>
-      <div class="ic-signals">
-        ${d.sigs.map(s=>`<div class="ic-sig">
-          <span class="ic-sig-name">${s.n}</span>
-          <span style="display:flex;align-items:center;gap:5px;">
-            <span class="ic-sig-val">${s.v}</span>
-            <span class="z ${s.z.c}" style="font-size:9px">${s.z.l}</span>
-          </span>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  });
+// ERP classification
+function classifyERP(erp) {
+  if(erp===null) return {l:'N/A',z:'zn',pts:1};
+  if(erp>2) return {l:'Attractive',z:'zg',pts:2};
+  if(erp>0) return {l:'Marginal',z:'za',pts:1};
+  return {l:'Negative',z:'zr',pts:0};
 }
 
-// ═══════════════════════════════════════
-// ALLOCATION BLOCK
-// ═══════════════════════════════════════
-function buildAlloc(){
-  const erp=erp_c(L);
-  const {eq,bond}=allocModel(L.cape,erp);
-  const eqCol=eq>=70?'var(--grn)':eq>=55?'var(--amb)':'var(--red)';
-  const capeBase=L.cape<15?92:L.cape<20?84:L.cape<25?76:L.cape<30?68:L.cape<35?62:55;
-  const erpAdj=erp<0?-8:erp<1?-4:erp>3?+5:0;
-  document.getElementById('alloc-block').innerHTML=`
-    <div class="alloc-title">Suggested equity / bond split — based on CAPE + ERP</div>
-    <div class="alloc-sub">
-      CAPE ${L.cape.toFixed(1)}× → base equity ${capeBase}% &nbsp;·&nbsp;
-      ERP ${erp>=0?'+':''}${erp.toFixed(2)}% → adjustment ${erpAdj>=0?'+':''}${erpAdj}% &nbsp;·&nbsp;
-      <strong>Result: ${eq}% equity / ${bond}% bonds</strong>
-    </div>
-    <div class="alloc-bars">
-      <div class="arow">
-        <div class="aname">Equities</div>
-        <div class="abar-w"><div class="abar" style="width:${eq}%;background:${eqCol}"></div></div>
-        <div class="apct" style="color:${eqCol}">${eq}%</div>
-      </div>
-      <div class="arow">
-        <div class="aname">Bonds/Cash</div>
-        <div class="abar-w"><div class="abar" style="width:${bond}%;background:var(--blu)"></div></div>
-        <div class="apct" style="color:var(--blu)">${bond}%</div>
-      </div>
-    </div>
-    <div class="alloc-why">
-      Why: CAPE at ${L.cape.toFixed(1)}× is in the "expensive" range historically associated with lower forward returns.
-      ${erp<0?`The negative ERP (${erp.toFixed(2)}%) means US government bonds currently yield more than equities' earnings — an unusual situation that further reduces the case for heavy equity exposure.`
-             :erp<1?`The thin ERP (+${erp.toFixed(2)}%) means equities are only marginally out-yielding bonds — not enough cushion for the additional risk equities carry.`
-             :`The positive ERP (+${erp.toFixed(2)}%) provides some cushion, moderating the CAPE caution signal.`}
-      These two signals together drive the ${bond}% bond/cash suggestion.
-    </div>`;
+// score → circle class
+function scoreClass(pct) {
+  if(pct>=0.75) return {cls:'sc-cool',lbl:'Attractive'};
+  if(pct>=0.5)  return {cls:'sc-neutral',lbl:'Neutral'};
+  if(pct>=0.25) return {cls:'sc-warm',lbl:'Caution'};
+  return {cls:'sc-hot',lbl:'Expensive'};
 }
 
-// ═══════════════════════════════════════
-// EXPECTED RETURNS
-// ═══════════════════════════════════════
-function buildExpRet(){
-  const cases=[
-    {lbl:'S&P 500 at CAPE '+L.cape.toFixed(1)+'× (today)',cape:L.cape,note:"Today's actual CAPE"},
-    {lbl:'If CAPE normalises to 25×',cape:25,note:'~5 years of 8% earnings growth with flat prices'},
-    {lbl:'If CAPE normalises to 20×',cape:20,note:'Near long-run mean — requires a correction or earnings surge'},
-  ];
-  const g=document.getElementById('exp-grid');g.innerHTML='';
-  cases.forEach(c=>{
-    const r=exp10y(c.cape);
-    const col=r>5?'var(--grn)':r>2?'var(--amb)':'var(--red)';
-    g.innerHTML+=`<div class="exp-card">
-      <div class="exp-lbl">${c.lbl}</div>
-      <div class="exp-val" style="color:${col}">${r>=0?'+':''}${r}%</div>
-      <div class="exp-sub">expected 10Y real annual return<br>${c.note}</div>
-    </div>`;
-  });
+// ── 10Y EXPECTED RETURN ESTIMATE ──
+function calcExpReturn(idx) {
+  // Real return estimate: earnings yield (based on CAPE) + real growth - mean reversion drag
+  if(idx==='c') {
+    const ey = 1/L.cape_c*100;
+    const growth = 2.0; // US real earnings growth
+    const drag = L.cape_c > 16 ? Math.min((L.cape_c-16)/16*1.5, 3.5) : 0;
+    const low = +(ey + growth - drag - 1).toFixed(1);
+    const high = +(ey + growth - drag + 1.5).toFixed(1);
+    return {low, high, note:'Real (inflation-adj.) annualised. Add ~2.5% for nominal.'};
+  }
+  if(idx==='v') {
+    const ey = 1/L.pe_v*100;
+    const growth = 2.5;
+    const drag = L.pe_v > 17 ? Math.min((L.pe_v-17)/17*1.2, 2.5) : 0;
+    const low = +(ey + growth - drag - 1).toFixed(1);
+    const high = +(ey + growth - drag + 1.5).toFixed(1);
+    return {low, high, note:'Real annualised. Blended developed+EM growth rate. Add ~2.5% for nominal.'};
+  }
+  if(idx==='n') {
+    const cape = L.cape_n || L.pe_n;
+    const ey = 1/cape*100;
+    const growth = 5.5; // India real GDP/earnings growth
+    const drag = cape > 22 ? Math.min((cape-22)/22*2.0, 4.0) : 0;
+    const low = +(ey + growth - drag - 1.5).toFixed(1);
+    const high = +(ey + growth - drag + 2).toFixed(1);
+    return {low, high, note:'Real annualised. Higher uncertainty range for EM. Add ~4–5% for nominal INR.'};
+  }
 }
 
-// ═══════════════════════════════════════
-// KNOWLEDGE CARDS
-// ═══════════════════════════════════════
-const KNOW=[
+// ── VERDICT TEXT ──
+function verdictText(score10, idx) {
+  const pct = score10/10;
+  if(idx==='c') {
+    if(pct>=0.75) return {cls:'vb-add', text:'<strong>Consider adding.</strong> Most signals look attractive relative to history.'};
+    if(pct>=0.5)  return {cls:'vb-hold', text:'<strong>Hold existing position.</strong> Signals are mixed — not expensive enough to reduce, not cheap enough to add aggressively.'};
+    if(pct>=0.25) return {cls:'vb-caution', text:'<strong>Caution — consider pausing new contributions.</strong> CAPE, Buffett Indicator and negative ERP all signal US equities are pricing in a lot of optimism. Consider tilting toward VWRA, Nifty or bonds instead.'};
+    return {cls:'vb-avoid', text:'<strong>Expensive on most signals.</strong> CAPE at 37.5× has only been beaten once in 150 years. Negative ERP means bonds currently compete on yield. New money may find better expected returns elsewhere.'};
+  }
+  if(idx==='v') {
+    if(pct>=0.75) return {cls:'vb-add', text:'<strong>Consider adding.</strong> Most signals look attractive.'};
+    if(pct>=0.5)  return {cls:'vb-hold', text:'<strong>Reasonable to hold and add gradually.</strong> VWRA\'s 30%+ P/E discount to S&P 500 provides a margin of safety. Fama-French logic suggests higher long-run expected returns than CSPX.'};
+    if(pct>=0.25) return {cls:'vb-caution', text:'<strong>Neutral — hold, don\'t rush to add.</strong> Global equities elevated but not extreme. VWRA remains cheaper than CSPX and is a reasonable core holding.'};
+    return {cls:'vb-avoid', text:'<strong>Expensive vs own history.</strong> Though still cheaper than CSPX, consider trimming vs bonds if ERP turns very negative.'};
+  }
+  if(idx==='n') {
+    if(pct>=0.75) return {cls:'vb-add', text:'<strong>Consider adding.</strong> Multiple signals point to fair-to-attractive valuation for India.'};
+    if(pct>=0.5)  return {cls:'vb-hold', text:'<strong>Hold and consider gradual addition.</strong> Nifty is fairly valued on P/E and sits near historical median. Higher real growth expected than US or global. Negative ERP vs G-Sec is the main caution.'};
+    if(pct>=0.25) return {cls:'vb-caution', text:'<strong>Neutral — hold current position.</strong> Mixed signals. India\'s structural growth story intact but negative ERP and elevated CAPE suggest patience before adding heavily.'};
+    return {cls:'vb-avoid', text:'<strong>Expensive on most signals.</strong> Consider waiting for better entry or allocating to bonds instead.'};
+  }
+}
+
+// ── SIGNAL DEFINITIONS for each index ──
+const IDX = [
   {
-    id:'cape',title:'Shiller CAPE',tagline:'The single best predictor of long-term stock returns · Nobel Prize-winning research',
-    val:()=>L.cape.toFixed(1)+'×', zone:()=>zCape(L.cape),
-    now:()=>`CAPE is currently <strong>${L.cape.toFixed(1)}×</strong> — far above the 150-year median of 16×. Shiller's formula implies expected real annual returns of around <strong>${exp10y(L.cape)}% over the next 10 years</strong>. The market has only been more expensive twice: the 1929 peak (before the Great Depression) and the 2000 dot-com bubble, when CAPE reached 44×. This does not mean a crash is imminent — markets can stay expensive for years. But it does mean expected long-run returns from today's entry point are historically low.`,
-    stats:[{l:'Current',v:()=>L.cape.toFixed(1)+'×'},{l:'150Y median',v:()=>'16.0×'},{l:'Exp. 10Y real return',v:()=>exp10y(L.cape)+'% p.a.'},{l:'2000 peak',v:()=>'44×'}],
-    what:'CAPE (Cyclically Adjusted Price-to-Earnings) divides today\'s stock price by the average of the last 10 years of inflation-adjusted earnings. By averaging 10 years, it smooths out recessions (which temporarily crush earnings, making TTM P/E look falsely high) and booms (which inflate earnings, making TTM P/E look falsely cheap).',
-    why:'Robert Shiller and John Campbell\'s 1988 paper showed CAPE explains roughly 60% of variation in subsequent 10-year real equity returns — far better than any other single metric. Intuitively: you can\'t sustainably pay 40× earnings for growth that doesn\'t materialise. Mean reversion in valuations is a powerful long-term force.',
-    interp:[
-      {r:'< 15×',l:'Historically cheap — forward 10Y real returns averaged 10%+ p.a.',cur:()=>L.cape<15},
-      {r:'15–25×',l:'Fair to slightly elevated — forward returns typically 4–8% real p.a.',cur:()=>L.cape>=15&&L.cape<25},
-      {r:'25–35×',l:'Expensive — forward returns typically 0–4% real p.a.',cur:()=>L.cape>=25&&L.cape<35},
-      {r:'> 35×',l:'Extremely expensive — forward returns near zero or negative in real terms',cur:()=>L.cape>=35},
-    ],
-    action:'Use CAPE to set your equity allocation band. At CAPE > 30, consider holding 10–20% less equity than your default. At CAPE < 20, consider holding 10–15% more. Do not use CAPE to time short-term trades — it is a 10-year instrument, not a 1-year instrument.',
-    caveat:'CAPE has been "expensive" since 2014 and the US market still returned ~14% annually. Critics argue: (1) US corporate profitability has structurally improved, justifying higher multiples; (2) lower interest rates mathematically justify higher P/E ratios; (3) CAPE is backward-looking and the composition of the S&P 500 has changed dramatically. These are legitimate critiques — use CAPE as one signal among several.',
-    src:'Robert Shiller / multpl.com · Campbell & Shiller (1988) · Research Affiliates'
+    key:'c', label:'CSPX', name:'iShares Core S&P 500 UCITS ETF', css:'vc-b', color:'var(--blu)',
+    signals:[
+      {id:'pe_c',  name:'P/E ratio (TTM)', abbr:'P/E',    val:()=>L.pe_c,   fmt:v=>v.toFixed(2)+'×', avg:'Avg 21.4×',
+       tip:'Trailing 12-month P/E. Simple but noisy — one big earnings miss can swing it. Historical S&P 500 mean: 21.4×. Current at 27.89× = above long-run mean.'},
+      {id:'cape_c',name:'Shiller CAPE',    abbr:'CAPE',   val:()=>L.cape_c, fmt:v=>v.toFixed(1)+'×', avg:'Median 16.0×',
+       tip:'10-year inflation-adjusted P/E. Much more stable than TTM. Only beaten near the 2000 dot-com peak (44×). Current 37.5× = 2nd highest in 150 years of data. Implies low expected returns for the decade ahead.'},
+      {id:'bi',    name:'Buffett Indicator',abbr:'Mkt/GDP',val:()=>L.bi,    fmt:v=>v.toFixed(0)+'%', avg:'Normal: 75–120%',
+       tip:'Total US market cap ÷ GDP. Buffett called this "probably the best single measure of where valuations stand." Current: ~210% — 2.4 standard deviations above the historical trend. Only exceeded briefly before the 2000 crash.'},
+      {id:'erp_c', name:'Equity Risk Premium',abbr:'ERP', val:()=>+(1/L.pe_c*100-L.ub).toFixed(2), fmt:v=>(v>=0?'+':'')+v.toFixed(2)+'%', avg:'Hist avg: +2–3%',
+       tip:'Earnings yield (1÷P/E) minus US 10Y bond yield. Positive = equities offer more than bonds. Currently −0.81% — US bonds yield more than S&P 500 earnings yield. Historically unusual and a caution signal.', erp:true},
+    ]
   },
   {
-    id:'erp',title:'Equity Risk Premium (ERP)',tagline:'Are equities paying you enough extra return to justify the risk over bonds?',
-    val:()=>(erp_c(L)>=0?'+':'')+erp_c(L).toFixed(2)+'%', zone:()=>({c:erp_c(L)>2?'zg':erp_c(L)>0?'za':'zr',l:erp_c(L)>2?'Attractive':erp_c(L)>0?'Marginal':'Negative ERP'}),
-    now:()=>`S&P 500 earnings yield is <strong>${(1/L.pe_c*100).toFixed(2)}%</strong> (= 1 ÷ ${L.pe_c.toFixed(2)}). US 10-year Treasuries yield <strong>${L.ub.toFixed(2)}%</strong>. The ERP is therefore <strong>${(erp_c(L)>=0?'+':'')+erp_c(L).toFixed(2)}%</strong> — ${erp_c(L)<0?`negative, meaning you earn more by buying risk-free US government bonds than by owning the S&P 500 at current prices. This is unusual — equities are supposed to pay a premium for their extra risk. The last sustained negative ERP period was the late 1990s, which preceded the 2000–2002 crash.`:`positive but thin. Equities are offering slightly more than bonds, but the historical average ERP is +2–3%, so the current margin is well below normal.`}`,
-    stats:[{l:'S&P 500 earnings yield',v:()=>(1/L.pe_c*100).toFixed(2)+'%'},{l:'US 10Y yield',v:()=>L.ub.toFixed(2)+'%'},{l:'ERP (today)',v:()=>(erp_c(L)>=0?'+':'')+erp_c(L).toFixed(2)+'%'},{l:'Historical avg ERP',v:()=>'+2–3%'}],
-    what:'Earnings yield = 1 ÷ P/E × 100. It is the "interest rate" the stock market pays you on your investment based on current earnings. ERP = Earnings Yield − Risk-Free Bond Yield. It measures how much extra return equities offer over a guaranteed government bond.',
-    why:'Equities are risky. They can fall 50% in a recession. For bearing that risk, you should demand extra return above a riskless bond. The ERP quantifies whether you are being paid fairly for that risk. A negative ERP means you are not being compensated for equity risk relative to bonds.',
-    interp:[
-      {r:'ERP > 3%',l:'Equities very attractive vs bonds — historically strong buying signal',cur:()=>erp_c(L)>3},
-      {r:'ERP 1–3%',l:'Fair compensation for equity risk — maintain normal allocation',cur:()=>erp_c(L)>=1&&erp_c(L)<=3},
-      {r:'ERP 0–1%',l:'Thin margin — consider slight underweight equity vs bonds',cur:()=>erp_c(L)>=0&&erp_c(L)<1},
-      {r:'ERP < 0%',l:'Bonds yield more than equities — meaningfully underweight equity',cur:()=>erp_c(L)<0},
-    ],
-    action:'When ERP is negative AND CAPE is high (as currently), the case for holding more bonds and less equity is at its strongest. Consider increasing bond allocation to 35–45% and ensuring you hold short-to-medium duration bonds (so you benefit if rates eventually fall). For VWRA and Nifty, compute their ERP separately — they may offer better compensation.',
-    caveat:'The Fed Model (this comparison) is academically contested. Nominal bond yields and real equity earnings yields measure different things. In high inflation periods, high bond yields may not mean bonds are "better" investments — inflation will erode the bond\'s real value. Also, ERP alone has given false signals: negative ERP persisted for years in the late 1990s while equities kept rising.',
-    src:'Damodaran ERP estimates · Federal Reserve research · Shiller earnings yield data'
+    key:'v', label:'VWRA', name:'Vanguard FTSE All-World UCITS ETF', css:'vc-g', color:'var(--grn)',
+    signals:[
+      {id:'pe_v',  name:'P/E ratio (TTM)', abbr:'P/E',    val:()=>L.pe_v,  fmt:v=>v.toFixed(2)+'×', avg:'20Y avg 14.9×',
+       tip:'FTSE All-World TTM P/E from Vanguard factsheet (22.9× Jan 2026) and worldperatio.com. All-World trades at a ~30% discount to S&P 500 due to international and EM exposure. Fama-French: cheaper P/E = higher value factor = higher expected returns.'},
+      {id:'pb_v',  name:'P/B ratio',       abbr:'P/B',    val:()=>L.pb_v,  fmt:v=>v.toFixed(2)+'×', avg:'Hist avg ~2.5×',
+       tip:'Price-to-book from Vanguard factsheet. VWRA at 3.4× is above its historical average of ~2.5×. P/B directly maps to the Fama-French value factor (HML). Lower P/B = stronger value tilt = historically higher expected returns.'},
+      {id:'dy_v',  name:'Dividend yield',  abbr:'Div%',   val:()=>L.dy_v,  fmt:v=>v.toFixed(2)+'%', avg:'Hist avg ~2.3%',
+       tip:'From Vanguard factsheet. 1.6% is below VWRA\'s historical average. Higher yield = cheaper market. This signal is neutral — not alarming, but not cheap either.', inv:true},
+      {id:'erp_v', name:'Equity Risk Premium',abbr:'ERP', val:()=>+(1/L.pe_v*100-L.ub).toFixed(2), fmt:v=>(v>=0?'+':'')+v.toFixed(2)+'%', avg:'Should be >0%',
+       tip:'VWRA earnings yield vs US 10Y bond. Approximate — VWRA earns in multiple currencies. Currently slightly positive (+0.36%), meaning VWRA still offers marginally more than US Treasuries on an earnings yield basis. Better than CSPX.', erp:true},
+      {id:'roe_v', name:'Return on equity', abbr:'ROE',   val:()=>L.roe_v, fmt:v=>v.toFixed(1)+'%', avg:'Hist avg ~13%',
+       tip:'From Vanguard factsheet (18.7%, Jan 2026). ROE connects to the Fama-French profitability factor (RMW). Higher ROE = better quality companies. 18.7% is above the long-run average, suggesting good profitability.', roe:true},
+    ]
   },
   {
-    id:'pe',title:'P/E Ratio (TTM)',tagline:'Simple valuation check — useful but easily distorted by one-off earnings events',
-    val:()=>L.pe_c.toFixed(2)+'×', zone:()=>zPEc(L.pe_c),
-    now:()=>`S&P 500 TTM P/E is <strong>${L.pe_c.toFixed(2)}×</strong> vs 25-year average of 21.4×. All-World P/E is <strong>${L.pe_v.toFixed(2)}×</strong> vs 20Y average of 14.9× — roughly ${Math.round((L.pe_v/L.pe_c-1)*-100)}% cheaper than the S&P 500. Nifty 50 is at <strong>${L.pe_n?.toFixed(2)||'—'}×</strong> vs 20Y average of 21.0× — ${L.pe_n<21?'below':'above'} its long-run mean.`,
-    stats:[{l:'CSPX / S&P 500',v:()=>L.pe_c.toFixed(2)+'×'},{l:'S&P 500 25Y avg',v:()=>'21.4×'},{l:'VWRA / All-World',v:()=>L.pe_v.toFixed(2)+'×'},{l:'Nifty 50',v:()=>L.pe_n?.toFixed(2)+'×'||'—'}],
-    what:'TTM P/E divides today\'s price by the last 12 months of actual reported earnings. If investors pay $28 per $1 of earnings, the P/E is 28×. A high P/E means investors expect strong future growth — or simply that the market is priced expensively relative to current profits.',
-    why:'P/E is the most widely quoted valuation metric for good reason: it is simple, intuitive, and updated constantly. It is the first-pass filter for any valuation assessment. Its weakness is that it reflects only the last 12 months of earnings, which can be distorted by recessions (earnings crash, P/E looks high falsely) or one-off tax changes, write-offs, or stimulus.',
-    interp:[
-      {r:'S&P 500 < 15×',l:'Historically cheap — last seen in 2011–12 post-GFC',cur:()=>L.pe_c<15},
-      {r:'15–22×',l:'Historically fair value range for S&P 500',cur:()=>L.pe_c>=15&&L.pe_c<22},
-      {r:'22–28×',l:'Elevated but not unprecedented — periods of low rates can sustain this',cur:()=>L.pe_c>=22&&L.pe_c<28},
-      {r:'> 28×',l:'Expensive — rarely sustained for long; requires exceptional earnings growth to justify',cur:()=>L.pe_c>=28},
-    ],
-    action:'Use TTM P/E as a quick orientation, then confirm with CAPE and ERP. If all three point the same direction, the signal is more reliable. If only TTM P/E is elevated but CAPE is moderate, the cause may be temporary earnings weakness rather than structural overvaluation.',
-    caveat:'TTM P/E gave a disastrously misleading signal in 2020: COVID crashed earnings, pushing TTM P/E to 35× — which looked terrifying. But forward returns from that point were excellent because CAPE (which uses 10-year earnings) showed the market was not actually that expensive. Always use CAPE alongside TTM P/E.',
-    src:'multpl.com · worldperatio.com · nifty-pe-ratio.com / NSE India'
-  },
-  {
-    id:'bi',title:'Buffett Indicator',tagline:"Warren Buffett's favourite macro valuation measure — total market cap vs GDP",
-    val:()=>L.bi.toFixed(0)+'%', zone:()=>zBI(L.bi),
-    now:()=>`The Buffett Indicator is currently <strong>${L.bi.toFixed(0)}%</strong> — meaning US equities are worth more than twice the entire US economy. The historical "normal" range is 75–120%. At 210%, this is near the highest reading ever recorded. Buffett himself called this "probably the best single measure of where valuations stand at any given moment." This signal alone is consistent with the message from CAPE: US equities are historically expensive.`,
-    stats:[{l:'Current reading',v:()=>L.bi.toFixed(0)+'%'},{l:'Historical normal',v:()=>'75–120%'},{l:'2021 peak',v:()=>'~185%'},{l:'2009 low',v:()=>'~55%'}],
-    what:'Total US stock market capitalisation (the combined market value of all publicly listed US companies) divided by US GDP (the size of the US economy). It asks: how much is the market "worth" relative to the economy\'s productive capacity?',
-    why:'Stock prices represent claims on future corporate earnings, and those earnings ultimately come from economic activity. When the market is worth far more than the economy can generate in earnings over time, either GDP must grow very fast to justify the prices, or prices must eventually fall to match reality.',
-    interp:[
-      {r:'< 75%',l:'Significantly undervalued — historically a strong long-term buying signal',cur:()=>L.bi<75},
-      {r:'75–115%',l:'Fairly valued — roughly normal range',cur:()=>L.bi>=75&&L.bi<115},
-      {r:'115–150%',l:'Modestly to significantly overvalued',cur:()=>L.bi>=115&&L.bi<150},
-      {r:'> 150%',l:'Strongly overvalued — limited historical margin of safety',cur:()=>L.bi>=150},
-    ],
-    action:'Use the Buffett Indicator as a macro cross-check on CAPE. When both are elevated (as now), the signal is more reliable. When they diverge (e.g. CAPE moderate but Buffett Indicator high), investigate why — it may be a structural shift rather than overvaluation.',
-    caveat:'The Buffett Indicator has a structural upward drift problem: US companies increasingly earn profits abroad, which boosts stock prices (and market cap) without boosting US GDP. This means "210% today" is not equivalent to "210% in 1990." Some analysts argue 150% is now the structural baseline. Additionally, historically low interest rates (2010–2021) mathematically justified higher valuations.',
-    src:'gurufocus.com · Warren Buffett, Fortune magazine 2001 · Federal Reserve Z.1 financial accounts'
+    key:'n', label:'Nifty 50', name:'NSE India (consolidated earnings)', css:'vc-a', color:'var(--amb)',
+    signals:[
+      {id:'pe_n',  name:'P/E ratio (TTM)', abbr:'P/E',    val:()=>L.pe_n,  fmt:v=>v.toFixed(2)+'×', avg:'20Y avg 21.0×',
+       tip:'NSE India consolidated TTM P/E (post-Apr 2021). At 20.23× it sits slightly below the 20-year average of 21×, in the "fairly valued" zone. Historically below 17× = strong buy signal for India.'},
+      {id:'cape_n',name:'Shiller CAPE',    abbr:'CAPE',   val:()=>L.cape_n, fmt:v=>v.toFixed(1)+'×', avg:'Hist avg ~22×',
+       tip:'India CAPE estimated at ~30× from siblisresearch.com and IIM Ahmedabad research. Above the historical average of ~22× — meaning 10 years of earnings show the market is elevated even if current-year P/E looks reasonable.'},
+      {id:'pb_n',  name:'P/B ratio',       abbr:'P/B',    val:()=>L.pb_n,  fmt:v=>v.toFixed(2)+'×', avg:'Hist avg ~3.2×',
+       tip:'From NSE India (3.14×). Slightly below the historical average — a mild positive signal. Fama-French: lower P/B = stronger value exposure = historically higher expected returns.'},
+      {id:'dy_n',  name:'Dividend yield',  abbr:'Div%',   val:()=>L.dy_n,  fmt:v=>v.toFixed(2)+'%', avg:'Hist avg ~1.4%',
+       tip:'From NSE India (1.35%). Below the historical average of ~1.4%. Nifty-pe-ratio.com notes: above 1.5% = attractively valued, below 1.0% = overvalued. Current sits in neutral-to-cautious territory.', inv:true},
+      {id:'erp_n', name:'Equity Risk Premium',abbr:'ERP', val:()=>L.pe_n&&L.ib?+(1/L.pe_n*100-L.ib).toFixed(2):null, fmt:v=>(v>=0?'+':'')+v.toFixed(2)+'%', avg:'India hist avg: 0–2%',
+       tip:'Nifty earnings yield minus India 10Y G-Sec yield. Currently ~−1.82% — negative, meaning government bonds yield more than Nifty\'s earnings yield. Historically unusual for India and worth monitoring.', erp:true},
+      {id:'cape_n_signal', name:'CAPE vs avg', abbr:'CAPE zone', val:()=>L.cape_n, fmt:v=>v.toFixed(1)+'×', avg:'Avg ~22×',
+       tip:'Nifty CAPE at ~30× is 36% above its historical average of ~22×. This implies somewhat below-average real returns for the decade ahead by the CAPE methodology.'},
+    ]
   },
 ];
 
-function buildKnow(){
-  const c=document.getElementById('know-cards');c.innerHTML='';
-  KNOW.forEach((k,i)=>{
-    const z=k.zone();const v=k.val();
-    c.innerHTML+=`<div class="know-card">
-      <div class="know-hdr" onclick="toggleK(${i})">
-        <div class="kh-left">
-          <div class="kh-title">${k.title} <span class="z ${z.c}" style="font-size:10px">${z.l}</span></div>
-          <div class="kh-sub">${k.tagline}</div>
+// ── SCORE each index ──
+function scoreIdx(idx) {
+  let pts=0, max=0;
+  idx.signals.forEach(s => {
+    const val = s.val();
+    let r;
+    if(s.erp) r = classifyERP(val);
+    else if(s.roe) r = val>=15?{pts:2}:val>=11?{pts:1}:{pts:0};
+    else r = classify(s.id, val);
+    pts += r.pts; max += 2;
+  });
+  return {pts, max, score10:+(pts/max*10).toFixed(1)};
+}
+
+// ── BUILD VERDICT CARDS ──
+function buildVerdictCards() {
+  const cont = document.getElementById('verdict-cards'); cont.innerHTML='';
+  IDX.forEach(idx => {
+    const {pts,max,score10} = scoreIdx(idx);
+    const {cls:scCls, lbl:scLbl} = scoreClass(pts/max);
+    const er = calcExpReturn(idx.key);
+    const verd = verdictText(score10, idx.key);
+    const erColor = er.low>=5?'var(--grn)':er.low>=2?'var(--amb)':'var(--red)';
+
+    const lights = idx.signals.map(s => {
+      const val = s.val();
+      let r;
+      if(s.erp) r = classifyERP(val);
+      else if(s.roe) r = val>=15?{l:'Quality',z:'zg',pts:2}:val>=11?{l:'Avg',z:'za',pts:1}:{l:'Weak',z:'zr',pts:0};
+      else r = classify(s.id, val);
+      const ltcls = r.z==='zg'||r.z==='zb'?'sl-g':r.z==='za'?'sl-a':r.z==='zn'?'sl-n':'sl-r';
+      return `<span class="sl ${ltcls}" title="${s.tip}">${s.abbr}: ${r.l}</span>`;
+    }).join('');
+
+    cont.innerHTML += `
+      <div class="vcard ${idx.css}">
+        <div class="vc-ticker">${idx.label}</div>
+        <div class="vc-name">${idx.name}</div>
+        <div class="vc-score-row">
+          <div class="vc-score ${scCls}">
+            <span class="vc-score-num">${score10}</span>
+            <span class="vc-score-den">/ 10</span>
+          </div>
+          <div>
+            <div class="vc-verdict-label" style="color:${idx.color}">${scLbl}</div>
+            <div class="vc-verdict-sub">${pts} / ${max} pts · ${idx.signals.length} signals</div>
+          </div>
         </div>
-        <div class="kh-right">
-          <div class="kh-val">${v}</div>
-          <div class="ktog" id="kt${i}">＋</div>
+        <div class="verdict-box ${verd.cls}">${verd.text}</div>
+        <div class="sig-lights">${lights}</div>
+        <div class="exp-return">
+          <div class="er-label">10-year expected real return (est.)</div>
+          <div class="er-range" style="color:${erColor}">${er.low}% – ${er.high}% p.a.</div>
+          <div class="er-sub">${er.note}</div>
         </div>
-      </div>
-      <div class="know-body" id="kb${i}">
-        <div class="kb-now" style="margin-top:2px">${k.now()}</div>
-        <div class="kb-grid">${k.stats.map(s=>`<div class="kb-stat"><div class="kb-stat-lbl">${s.l}</div><div class="kb-stat-val">${s.v()}</div></div>`).join('')}</div>
-        <div class="kb-sec"><h4>What is it?</h4><p>${k.what}</p></div>
-        <div class="kb-sec"><h4>Why does it matter for long-term investors?</h4><p>${k.why}</p></div>
-        <div class="kb-sec">
-          <h4>How to read the numbers</h4>
-          <div class="kb-interp">${k.interp.map(r=>`<div class="ki-row${r.cur()?' cur':''}">
-            <span class="ki-range">${r.r}</span>
-            <span class="ki-label">${r.r.cur?'→ ':''}${r.l}${r.cur()?' ← you are here':''}</span>
-          </div>`).join('')}</div>
-        </div>
-        <div class="kb-action"><h4>What to do with this signal</h4><p>${k.action}</p></div>
-        <div class="kb-caveat"><h4>Important limitation — don't rely on this alone</h4><p>${k.caveat}</p></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--t3);font-family:var(--mono)">Sources: ${k.src}</div>
-      </div>
-    </div>`;
+      </div>`;
   });
 }
-function toggleK(i){
-  const b=document.getElementById('kb'+i),t=document.getElementById('kt'+i);
-  const o=b.classList.toggle('open');t.textContent=o?'－':'＋';
-}
 
-// ═══════════════════════════════════════
-// ACT — contextual alternatives
-// ═══════════════════════════════════════
-function buildAct(){
-  const erp=erp_c(L);const erp_nifty=erp_n(L);
-  const cape=L.cape;
-
-  // Dynamic reasoning for Act page
-  const actReason=document.getElementById('act-reasoning');
-  let actText='';
-  if(erp<0&&cape>30){
-    actText=`<strong>Today's signals point clearly toward increasing bond allocation.</strong> CAPE at ${cape.toFixed(1)}× and a negative ERP (${erp.toFixed(2)}%) together mean: US equities are priced expensively on a historical basis, and US government bonds are currently out-yielding equity earnings. Short-duration government bonds (SSBs, T-bills) and global diversification (VWRA) are the most relevant alternatives right now. Options are ranked by current relevance below.`;
-  } else if(erp<1){
-    actText=`<strong>Signals suggest a modest shift toward bonds is reasonable.</strong> The ERP is thin (+${erp.toFixed(2)}%) — equities are not offering strong compensation over bonds. A small increase in bond allocation (5–10 percentage points) is defensible. VWRA offers cheaper global exposure as an equity alternative to CSPX. Options are ranked below.`;
-  } else {
-    actText=`<strong>Current signals do not make a strong case for switching out of equities.</strong> The ERP is positive (+${erp.toFixed(2)}%), meaning equities are compensating for their extra risk. Maintain your normal allocation. The options below are relevant if you are approaching your target equity % naturally through rebalancing.`;
-  }
-  actReason.innerHTML=actText;
-
-  // Build alternatives with dynamic relevance
-  const alts=[
-    {
-      name:'Short-duration government bonds',
-      priority:'Most relevant now',highlight:erp<0,
-      relevance:erp<0?'high':erp<1?'med':'low',
-      relevanceLabel:erp<0?'Highly relevant — bonds out-yield equities today':erp<1?'Relevant — thin ERP makes bonds competitive':'Low urgency — equities still offer better yield',
-      why:`Government bonds yield ${L.ub.toFixed(2)}% risk-free vs S&P 500 earnings yield of ${(1/L.pe_c*100).toFixed(2)}%. When ERP is negative, bonds literally pay more than equities' earnings yield with zero equity risk. Short-duration bonds (1–5 years) minimise interest rate risk.`,
-      when:'When ERP is negative or near zero. Currently the primary case for holding bonds over adding more CSPX.',
-      sg:'SSBs · 6-month T-bills · ABF Singapore Bond ETF (A35)'
-    },
-    {
-      name:'VWRA instead of CSPX — global diversification',
-      priority:'Relevant equity alternative',highlight:true,
-      relevance:'high',
-      relevanceLabel:`VWRA is ~${Math.round((1-L.pe_v/L.pe_c)*100)}% cheaper than CSPX on P/E right now`,
-      why:`VWRA holds ~60% US equities and ~40% international. Its current P/E is ${L.pe_v.toFixed(2)}× vs CSPX's ${L.pe_c.toFixed(2)}×. If you believe US valuation is stretched (CAPE + Buffett Indicator both say yes), holding VWRA instead of CSPX gives you equity exposure at a lower average multiple.`,
-      when:'When US-specific signals (CAPE, Buffett Indicator) are more alarming than global signals. VWRA dilutes the expensive US premium.',
-      sg:'VWRA on LSE in USD · Accessible via DBS Vickers, IBKR, Moomoo'
-    },
-    {
-      name:'Singapore Savings Bonds (SSBs)',
-      priority:'Singapore-specific · safe and flexible',highlight:false,
-      relevance:erp<0?'high':'med',
-      relevanceLabel:'Government-guaranteed, no capital loss, redeemable monthly',
-      why:`SSBs offer 3.0–3.3% p.a. (10Y average) with zero capital loss risk and full principal guarantee. They are the safest possible alternative for the bond portion of a Singapore investor's portfolio. No lock-in — you can redeem any month.`,
-      when:'For the bond/cash portion of your portfolio. Ideal as a bond allocation for Singapore investors who want simplicity and safety.',
-      sg:'Apply via DBS/POSB/OCBC/UOB · Max $200,000 per person'
-    },
-    {
-      name:'T-bills (6-month)',
-      priority:'Singapore-specific · short duration',highlight:false,
-      relevance:'med',
-      relevanceLabel:'~3.5–3.8% p.a. · very safe · very liquid',
-      why:'Singapore 6-month T-bills yield around 3.5–3.8% p.a. with full government backing and high liquidity. Better than idle cash. Good for money you expect to deploy into equities within 6–12 months.',
-      when:'Parking cash while waiting for better entry valuations, or as a liquid emergency fund extension.',
-      sg:'Apply via SGX or major banks · No cap · Biweekly auctions'
-    },
-    {
-      name:'Gold (small permanent allocation)',
-      priority:'Portfolio insurance · not a trade',highlight:false,
-      relevance:'low',
-      relevanceLabel:'Relevant as a permanent 5–10% holding, not as a timing call',
-      why:'Gold is uncorrelated to both equities and bonds. It has zero earnings yield but has preserved purchasing power over centuries. In a portfolio context, a 5–10% gold allocation reduces overall volatility without significantly reducing long-run returns. Not a "safe haven" for short-term protection — it can drop 20–30% in months.',
-      when:'As a permanent small allocation within a diversified portfolio. Not as a trade on market conditions.',
-      sg:'SPDR Gold (GLD) on SGX · iShares Physical Gold (SGLN) on LSE · Endowus Gold'
-    },
-    {
-      name:'Cash / money market funds',
-      priority:'Emergency buffer only',highlight:false,
-      relevance:'low',
-      relevanceLabel:'Keep 6–12 months expenses here; avoid more for investment timing',
-      why:'Cash has optionality — you can deploy it when valuations normalise. But holding large cash positions for timing purposes consistently underperforms staying invested. Limit to your emergency fund (6–12 months expenses). Beyond that, cash is usually a long-run drag.',
-      when:'Emergency fund and short-term liquidity needs only. Syfe Cash+, MoneyOwl WiseSaver, or bank savings accounts.',
-      sg:'Syfe Cash+ · MoneyOwl WiseSaver · OCBC 360 · UOB One'
-    },
+// ── BUILD SNAPSHOT TABLE ──
+function buildSnapTable() {
+  const ROW_DEFS = [
+    {name:'P/E ratio (TTM)', what:'Price ÷ trailing 12M earnings', tip:'TTM P/E. Simple and widely followed. Noisier than CAPE but updated continuously.', ids:{c:'pe_c',v:'pe_v',n:'pe_n'}},
+    {name:'Shiller CAPE', what:'P/E using 10Y inflation-adj. earnings', tip:'Much more stable than TTM P/E. Removes the effect of recessions and boom years on earnings.', ids:{c:'cape_c',v:null,n:'cape_n'}},
+    {name:'P/B ratio', what:'Price ÷ book value (net assets)', tip:'Fama-French value factor proxy. Lower P/B = more value exposure = historically higher expected returns.', ids:{c:null,v:'pb_v',n:'pb_n'}},
+    {name:'Dividend yield', what:'Annual dividends ÷ price', tip:'Higher yield = cheaper market. Reflects income return. Not tracked for CSPX (accumulating ETF focused on growth).', ids:{c:null,v:'dy_v',n:'dy_n'}},
+    {name:'Equity risk premium', what:'Earnings yield − bond yield', tip:'Positive = equities look attractive vs bonds. Negative (US and India currently) = bonds are competitive.', ids:{c:'erp_c',v:'erp_v',n:'erp_n'}, erp:true},
+    {name:'Buffett Indicator / ROE', what:'US: Mkt cap÷GDP · VWRA: ROE · Nifty: CAPE zone', tip:'CSPX: Buffett Indicator (market cap ÷ GDP). VWRA: Return on equity (profitability signal). Nifty: CAPE classification.', mixed:true},
   ];
 
-  const g=document.getElementById('alt-grid');g.innerHTML='';
-  alts.forEach(a=>{
-    const rCls=a.relevance==='high'?'ar-high':a.relevance==='med'?'ar-med':'ar-low';
-    g.innerHTML+=`<div class="alt-card${a.highlight?' highlighted':''}">
-      <div class="alt-priority">${a.priority}</div>
-      <div class="alt-name">${a.name}</div>
-      <div class="alt-relevance ${rCls}">${a.relevanceLabel}</div>
-      <div class="alt-why">${a.why}</div>
-      <div class="alt-when" style="font-size:11px;color:var(--t3);margin-bottom:6px;"><em>When:</em> ${a.when}</div>
-      <div class="alt-sg">${a.sg}</div>
-    </div>`;
-  });
-}
+  const tbody = document.getElementById('snap-tbody'); tbody.innerHTML='';
+  ROW_DEFS.forEach(row => {
+    const cells = ['c','v','n'].map(k => {
+      if(row.mixed) {
+        if(k==='c') {
+          const r = classify('bi', L.bi);
+          return `<td class="sig-val-cell">${L.bi.toFixed(0)}%<div class="sig-avg">Normal: 75–120%</div></td><td><span class="z ${r.z}" style="font-size:10px">${r.l}</span></td>`;
+        }
+        if(k==='v') {
+          const roe = L.roe_v;
+          const r = roe>=15?{l:'Quality',z:'zg'}:roe>=11?{l:'Average',z:'za'}:{l:'Weak',z:'zr'};
+          return `<td class="sig-val-cell">${roe?roe.toFixed(1)+'%':'—'}<div class="sig-avg">ROE · hist avg ~13%</div></td><td>${roe?`<span class="z ${r.z}" style="font-size:10px">${r.l}</span>`:'—'}</td>`;
+        }
+        if(k==='n') {
+          const r = classify('cape_n', L.cape_n);
+          return `<td class="sig-val-cell">${L.cape_n?L.cape_n.toFixed(1)+'×':'—'}<div class="sig-avg">CAPE · avg ~22×</div></td><td>${L.cape_n?`<span class="z ${r.z}" style="font-size:10px">${r.l}</span>`:'—'}</td>`;
+        }
+      }
+      const sid = row.ids[k];
+      if(!sid && !row.erp) return '<td class="sig-val-cell" style="color:var(--t3)">—</td><td>—</td>';
+      let val, r, disp, avg;
+      if(row.erp) {
+        if(k==='c') { val=+(1/L.pe_c*100-L.ub).toFixed(2); avg='Hist avg +2–3%'; }
+        else if(k==='v') { val=+(1/L.pe_v*100-L.ub).toFixed(2); avg='Should be >0%'; }
+        else { val=L.pe_n&&L.ib?+(1/L.pe_n*100-L.ib).toFixed(2):null; avg='India hist 0–2%'; }
+        r = classifyERP(val);
+        disp = val!==null?(val>=0?'+':'')+val.toFixed(2)+'%':'—';
+      } else {
+        val = k==='c'?L[sid]:k==='v'?L[sid]:L[sid];
+        r = classify(sid, val);
+        const sigDef = IDX.find(i=>i.key===k)?.signals.find(s=>s.id===sid);
+        disp = val!==null&&val!==undefined?sigDef?.fmt(val):'—';
+        avg = sigDef?.avg||'';
+      }
+      return `<td class="sig-val-cell">${disp}<div class="sig-avg">${avg||''}</div></td><td>${disp!=='—'?`<span class="z ${r.z}" style="font-size:10px">${r.l}</span>`:'—'}</td>`;
+    }).join('');
 
-// ═══════════════════════════════════════
-// DATA TABLE
-// ═══════════════════════════════════════
-function buildData(){
-  const tb=document.getElementById('data-tbody');tb.innerHTML='';
-  [...HIST].sort((a,b)=>b.y-a.y).forEach(r=>{
-    const d=r.y===2026?L:r;
-    const zpc=zPEc(d.pe_c),zcape=zCape(d.cape);
-    const zn=zPEn(d.pe_n);
-    const ec=erp_c(d),en=d.pe_n&&d.ib?erp_n(d):null;
-    const ecCol=ec<0?'var(--red)':ec<2?'var(--amb)':'var(--grn)';
-    const enCol=en===null?'':en<0?'var(--red)':en<1?'var(--amb)':'var(--grn)';
-    const nn=r.y<=2020&&d.pe_n?' <span style="font-size:9px;color:var(--t3)">(S)</span>':'';
-    tb.innerHTML+=`<tr>
-      <td style="font-weight:400;font-family:var(--mono)">${r.y}</td>
-      <td class="tr">${d.pe_c.toFixed(2)}×</td><td><span class="z ${zpc.c}" style="font-size:10px">${zpc.l}</span></td>
-      <td class="tr">${d.cape?d.cape.toFixed(1)+'×':'—'}</td><td>${d.cape?`<span class="z ${zcape.c}" style="font-size:10px">${zcape.l}</span>`:'—'}</td>
-      <td class="tr">${d.bi?d.bi+'%':'—'}</td>
-      <td class="tr" style="color:${ecCol}">${ec>=0?'+':''}${ec.toFixed(2)}%</td>
-      <td class="tr">${d.pe_v?d.pe_v.toFixed(2)+'×':'—'}</td>
-      <td class="tr">${d.pe_n?d.pe_n.toFixed(1)+'×'+nn:'—'}</td><td>${d.pe_n?`<span class="z ${zn.c}" style="font-size:10px">${zn.l}</span>`:'—'}</td>
-      <td class="tr" style="color:${enCol}">${en!==null?(en>=0?'+':'')+en.toFixed(2)+'%':'—'}</td>
+    tbody.innerHTML += `<tr>
+      <td class="sig-name-cell">
+        <div class="sn">${row.name} <span class="tip"><span class="tip-i">?</span><span class="tip-box">${row.tip}</span></span></div>
+        <div class="sd">${row.what}</div>
+      </td>
+      ${cells}
     </tr>`;
   });
 }
 
-// ═══════════════════════════════════════
-// CHARTS
-// ═══════════════════════════════════════
-const charts={};const GC='rgba(0,0,0,0.032)',TC='#98958d',FM='IBM Plex Mono,monospace';
-function bOpts(mn,mx,pct=false){
-  return{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-    plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:TC,borderWidth:1,titleColor:'#5a5850',bodyColor:'#17160f',padding:10,
-      callbacks:{label:c=>' '+c.dataset.label+': '+(c.parsed.y!==null?(pct?(c.parsed.y>=0?'+':'')+c.parsed.y.toFixed(2)+'%':c.parsed.y.toFixed(2)+'×'):'—')}}},
-    scales:{x:{grid:{color:GC},ticks:{color:TC,font:{family:FM,size:10},maxRotation:45,autoSkip:true,maxTicksLimit:14}},
-      y:{grid:{color:GC},ticks:{color:TC,font:{family:FM,size:10},callback:v=>pct?(v>=0?'+':'')+v+'%':v+'×'},min:mn,max:mx}}};
-}
-function filt(co){return HIST.filter(d=>d.y>=co).map(d=>d.y===2026?{...d,...L}:d).sort((a,b)=>a.y-b.y);}
-let cR=10,pR=5,eR=10;
-function buildCAPE(co){
-  const data=filt(co).filter(d=>d.cape);const lb=data.map(d=>''+d.y);
-  if(charts.cape)charts.cape.destroy();
-  charts.cape=new Chart(document.getElementById('ch-cape'),{type:'line',data:{labels:lb,datasets:[
-    {label:'Shiller CAPE',data:data.map(d=>d.cape),borderColor:'var(--blu)',backgroundColor:'rgba(26,94,160,0.07)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--blu)',borderWidth:2,fill:true},
-    {label:'Median (16×)',data:lb.map(()=>16),borderColor:TC,borderWidth:1.2,borderDash:[4,4],pointRadius:0,fill:false},
-    {label:'Expensive (30×)',data:lb.map(()=>30),borderColor:'var(--amb)',borderWidth:1,borderDash:[2,4],pointRadius:0,fill:false},
-  ]},options:bOpts(5,52)});
-}
-function buildPE(co){
-  const data=filt(co);const lb=data.map(d=>''+d.y);
-  if(charts.pe)charts.pe.destroy();
-  charts.pe=new Chart(document.getElementById('ch-pe'),{type:'line',data:{labels:lb,datasets:[
-    {label:'CSPX/S&P500',data:data.map(d=>d.pe_c),borderColor:'var(--blu)',backgroundColor:'rgba(26,94,160,0.07)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--blu)',borderWidth:2,fill:true},
-    {label:'VWRA/AllWorld',data:data.map(d=>d.pe_v),borderColor:'var(--grn)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--grn)',borderWidth:2,fill:false},
-    {label:'Nifty50',data:data.map(d=>d.pe_n),borderColor:'var(--amb)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--amb)',borderWidth:2,fill:false},
-  ]},options:bOpts(6,45)});
-}
-function buildERP(co){
-  const data=filt(co).filter(d=>d.ub);const lb=data.map(d=>''+d.y);
-  const o=bOpts(-8,10,true);
-  o.plugins.tooltip.callbacks.label=c=>' '+c.dataset.label+': '+(c.parsed.y!==null?(c.parsed.y>=0?'+':'')+c.parsed.y.toFixed(2)+'%':'—');
-  o.scales.y.ticks.callback=v=>(v>=0?'+':'')+v+'%';
-  if(charts.erp)charts.erp.destroy();
-  charts.erp=new Chart(document.getElementById('ch-erp'),{type:'line',data:{labels:lb,datasets:[
-    {label:'S&P500 ERP',data:data.map(d=>+(1/d.pe_c*100-d.ub).toFixed(2)),borderColor:'var(--blu)',backgroundColor:'rgba(26,94,160,0.07)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--blu)',borderWidth:2,fill:true},
-    {label:'Nifty ERP',data:data.map(d=>d.pe_n&&d.ib?+(1/d.pe_n*100-d.ib).toFixed(2):null),borderColor:'var(--amb)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--amb)',borderWidth:2,fill:false},
-    {label:'Zero',data:lb.map(()=>0),borderColor:TC,borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
-  ]},options:o});
-}
-function buildBI(){
-  const data=filt(1994).filter(d=>d.bi);const lb=data.map(d=>''+d.y);
-  const o={...bOpts(40,230)};
-  o.plugins.tooltip.callbacks.label=c=>' '+c.dataset.label+': '+(c.parsed.y!==null?c.parsed.y.toFixed(0)+'%':'—');
-  o.scales.y.ticks.callback=v=>v+'%';
-  if(charts.bi)charts.bi.destroy();
-  charts.bi=new Chart(document.getElementById('ch-bi'),{type:'line',data:{labels:lb,datasets:[
-    {label:'Buffett Indicator',data:data.map(d=>d.bi),borderColor:'var(--blu)',backgroundColor:'rgba(26,94,160,0.07)',tension:0.3,pointRadius:3,pointBackgroundColor:'var(--blu)',borderWidth:2,fill:true},
-    {label:'Normal ceiling (120%)',data:lb.map(()=>120),borderColor:TC,borderWidth:1.2,borderDash:[4,4],pointRadius:0,fill:false},
-  ]},options:o});
-}
-function setCR(r,btn){btn.closest('.rrow').querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');cR=r;buildCAPE(2026-r);}
-function setPR(r,btn){btn.closest('.rrow').querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');pR=r;buildPE(2026-r);}
-function setER(r,btn){btn.closest('.rrow').querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');eR=r;buildERP(2026-r);}
+// ── BUILD SIGNAL DETAIL PAGE ──
+function buildSignalDetail() {
+  const cont = document.getElementById('signal-detail'); cont.innerHTML='';
+  IDX.forEach(idx => {
+    const {pts,max,score10} = scoreIdx(idx);
+    const {cls:scCls,lbl:scLbl} = scoreClass(pts/max);
+    const er = calcExpReturn(idx.key);
+    const verd = verdictText(score10, idx.key);
+    const erColor = er.low>=5?'var(--grn)':er.low>=2?'var(--amb)':'var(--red)';
 
-// ═══════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════
-let hi=false,ki=false,ai=false;
+    const sigRows = idx.signals.map(s => {
+      const val = s.val();
+      let r;
+      if(s.erp) r = classifyERP(val);
+      else if(s.roe) r = val>=15?{l:'Quality quality',z:'zg',pts:2}:val>=11?{l:'Average',z:'za',pts:1}:{l:'Weak',z:'zr',pts:0};
+      else r = classify(s.id, val);
+      const disp = val!==null&&val!==undefined?s.fmt(val):'N/A';
+      return `
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--bdr);">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:400;">${s.name} <span class="tip"><span class="tip-i">?</span><span class="tip-box">${s.tip}</span></span></div>
+            <div style="font-size:11px;color:var(--t3);margin-top:1px;">${s.avg}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-family:var(--mono);font-size:18px;font-weight:400;letter-spacing:-.02em;">${disp}</div>
+            <span class="z ${r.z}" style="font-size:11px;margin-top:3px;display:inline-flex;">${r.l}</span>
+            <div style="font-size:10px;color:var(--t3);margin-top:2px;">${r.pts} / 2 pts</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    cont.innerHTML += `
+      <div class="chart-card" style="margin-bottom:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-size:16px;font-weight:400;color:${idx.color}">${idx.label}</div>
+            <div style="font-size:12px;color:var(--t2)">${idx.name}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="vc-score ${scCls}" style="width:50px;height:50px;">
+              <span class="vc-score-num" style="font-size:17px">${score10}</span>
+              <span class="vc-score-den">/10</span>
+            </div>
+            <div>
+              <div style="font-size:15px;font-weight:300">${scLbl}</div>
+              <div style="font-size:11px;color:var(--t3)">${pts}/${max} pts</div>
+            </div>
+          </div>
+        </div>
+        <div class="verdict-box ${verd.cls}" style="margin-bottom:14px;">${verd.text}</div>
+        ${sigRows}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0 0;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:10px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">10-year expected real return</div>
+            <div style="font-family:var(--mono);font-size:18px;color:${erColor}">${er.low}% – ${er.high}% p.a.</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:2px;">${er.note}</div>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+// ── BUILD FACTOR GRID ──
+function buildFactorGrid() {
+  const FACTORS = [
+    {key:'c', label:'CSPX / S&P 500', color:'var(--blu)',
+     rows:[
+       {name:'Market (beta)',f:100,c:'var(--blu)',note:'Full market exposure'},
+       {name:'Size (SMB)',f:5,c:'var(--t3)',note:'Large-cap only — no small-cap premium'},
+       {name:'Value (HML)',f:20,c:'var(--t3)',note:'Growth-tilted — low value exposure at P/E 27.9×'},
+       {name:'Profitability (RMW)',f:65,c:'var(--blu)',note:'US large caps are highly profitable'},
+       {name:'Investment (CMA)',f:50,c:'var(--t3)',note:'Moderate — US firms reinvest heavily'},
+     ]},
+    {key:'v', label:'VWRA / All-World', color:'var(--grn)',
+     rows:[
+       {name:'Market (beta)',f:100,c:'var(--grn)',note:'Full global market exposure'},
+       {name:'Size (SMB)',f:20,c:'var(--grn)',note:'Slight small-cap tilt via EM exposure'},
+       {name:'Value (HML)',f:45,c:'var(--grn)',note:'~30% cheaper than S&P 500 on P/E — meaningful value tilt'},
+       {name:'Profitability (RMW)',f:55,c:'var(--grn)',note:'ROE 18.7% (Jan 2026) — healthy but below US'},
+       {name:'Investment (CMA)',f:55,c:'var(--t3)',note:'Mixed — developed conservative, EM aggressive'},
+     ]},
+    {key:'n', label:'Nifty 50 / India', color:'var(--amb)',
+     rows:[
+       {name:'Market (beta)',f:100,c:'var(--amb)',note:'Full India large-cap exposure'},
+       {name:'Size (SMB)',f:10,c:'var(--t3)',note:'Large-cap only — no small-cap premium from Nifty 50'},
+       {name:'Value (HML)',f:55,c:'var(--amb)',note:'P/B 3.14× below historical avg — moderate value tilt'},
+       {name:'Profitability (RMW)',f:60,c:'var(--amb)',note:'India large caps profitable; ROE historically ~15%'},
+       {name:'Investment (CMA)',f:45,c:'var(--t3)',note:'India firms investing aggressively in growth'},
+     ]},
+  ];
+
+  const cont = document.getElementById('factor-grid'); cont.innerHTML='';
+  FACTORS.forEach(f => {
+    const rows = f.rows.map(r => `
+      <div class="factor-row">
+        <div class="factor-dot" style="background:${r.c}"></div>
+        <div style="flex:0 0 130px;font-size:11px;color:var(--t2)">${r.name}</div>
+        <div class="factor-strength"><div class="factor-fill" style="width:${r.f}%;background:${r.c}"></div></div>
+        <div style="font-size:10px;color:var(--t3);margin-left:8px;flex:1">${r.note}</div>
+      </div>`).join('');
+    cont.innerHTML += `
+      <div class="fc">
+        <div class="fc-hdr">
+          <span class="fc-name" style="color:${f.color}">${f.label}</span>
+          <span class="fc-ticker">Factor exposure</span>
+        </div>
+        ${rows}
+        <div style="font-size:10px;color:var(--t3);margin-top:10px;line-height:1.5;">Bar length = relative exposure. Stronger value/size tilt → Fama-French implies higher expected long-run returns.</div>
+      </div>`;
+  });
+}
+
+// ── DATA TABLE ──
+function buildDataTable() {
+  const tbody = document.getElementById('data-tbody'); tbody.innerHTML='';
+  [...HIST].sort((a,b)=>b.y-a.y).forEach(r => {
+    const d = r.y===2026?L:r;
+    const rpe_c = classify('pe_c',d.pe_c), rcape = classify('cape_c',d.cape_c);
+    const rpe_v = classify('pe_v',d.pe_v), rpe_n = classify('pe_n',d.pe_n);
+    const erp_c = d.pe_c&&d.ub?+(1/d.pe_c*100-d.ub).toFixed(2):null;
+    const erp_n = d.pe_n&&d.ib?+(1/d.pe_n*100-d.ib).toFixed(2):null;
+    const erpcc = erp_c!==null?(erp_c>0?'var(--grn)':'var(--red)'):'var(--t3)';
+    const erpnc = erp_n!==null?(erp_n>0?'var(--grn)':'var(--red)'):'var(--t3)';
+    const note = r.y<=2020&&d.pe_n?' <span style="font-size:9px;color:var(--t3)">(S)</span>':'';
+    tbody.innerHTML+=`<tr>
+      <td style="font-weight:400;font-family:var(--mono)">${r.y}</td>
+      <td class="tr">${d.pe_c?d.pe_c.toFixed(2)+'×':'—'}</td>
+      <td>${d.pe_c?`<span class="z ${rpe_c.z}" style="font-size:10px">${rpe_c.l}</span>`:'—'}</td>
+      <td class="tr">${d.cape_c?d.cape_c.toFixed(1)+'×':'—'}</td>
+      <td>${d.cape_c?`<span class="z ${rcape.z}" style="font-size:10px">${rcape.l}</span>`:'—'}</td>
+      <td class="tr">${d.pe_v?d.pe_v.toFixed(2)+'×':'—'}</td>
+      <td>${d.pe_v?`<span class="z ${rpe_v.z}" style="font-size:10px">${rpe_v.l}</span>`:'—'}</td>
+      <td class="tr" style="font-family:var(--mono)">${d.pb_v?d.pb_v.toFixed(2)+'×':'—'}</td>
+      <td class="tr" style="font-family:var(--mono)">${d.dy_v?d.dy_v.toFixed(2)+'%':'—'}</td>
+      <td class="tr">${d.pe_n?d.pe_n.toFixed(1)+'×'+note:'—'}</td>
+      <td>${d.pe_n?`<span class="z ${rpe_n.z}" style="font-size:10px">${rpe_n.l}</span>`:'—'}</td>
+      <td class="tr" style="font-family:var(--mono)">${d.pb_n?d.pb_n.toFixed(2)+'×':'—'}</td>
+      <td class="tr" style="font-family:var(--mono);color:${erpcc}">${erp_c!==null?(erp_c>=0?'+':'')+erp_c.toFixed(2)+'%':'—'}</td>
+      <td class="tr" style="font-family:var(--mono);color:${erpnc}">${erp_n!==null?(erp_n>=0?'+':'')+erp_n.toFixed(2)+'%':'—'}</td>
+    </tr>`;
+  });
+}
+
+// ── CHARTS ──
+const charts={}, GC='rgba(0,0,0,0.035)', TC='#98948a', FM='IBM Plex Mono,monospace';
+let peR=5,capeR=10,erpR=10;
+
+function baseOpts(mn,mx,pct=false){
+  return {
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},
+      tooltip:{backgroundColor:'#fff',borderColor:TC,borderWidth:1,titleColor:'#5a5848',bodyColor:'#17160e',padding:10,
+        callbacks:{label:c=>' '+c.dataset.label+': '+(c.parsed.y!==null?(pct?(c.parsed.y>=0?'+':'')+c.parsed.y.toFixed(2)+'%':c.parsed.y.toFixed(2)+'×'):'—')}}},
+    scales:{
+      x:{grid:{color:GC},ticks:{color:TC,font:{family:FM,size:10},maxRotation:45,autoSkip:true,maxTicksLimit:14}},
+      y:{grid:{color:GC},ticks:{color:TC,font:{family:FM,size:10},callback:v=>pct?(v>=0?'+':'')+v+'%':v+'×'},min:mn,max:mx}
+    }
+  };
+}
+function filt(cutoff){return HIST.filter(d=>d.y>=cutoff).map(d=>d.y===2026?{...d,...L}:d).sort((a,b)=>a.y-b.y);}
+
+function buildPE(cutoff){
+  const data=filt(cutoff), labels=data.map(d=>d.y.toString());
+  if(charts.pe)charts.pe.destroy();
+  charts.pe=new Chart(document.getElementById('ch-pe'),{type:'line',data:{labels,datasets:[
+    {label:'CSPX/SP500',data:data.map(d=>d.pe_c),borderColor:'var(--blu)',backgroundColor:'rgba(26,94,160,.06)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--blu)',borderWidth:2,fill:true},
+    {label:'VWRA/AllWorld',data:data.map(d=>d.pe_v),borderColor:'var(--grn)',backgroundColor:'rgba(21,102,64,.05)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--grn)',borderWidth:2,fill:false},
+    {label:'Nifty50',data:data.map(d=>d.pe_n),borderColor:'var(--amb)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--amb)',borderWidth:2,fill:false},
+  ]},options:baseOpts(6,45)});
+}
+
+function buildCAPE(cutoff){
+  const data=filt(cutoff).filter(d=>d.cape_c), labels=data.map(d=>d.y.toString());
+  if(charts.cape)charts.cape.destroy();
+  charts.cape=new Chart(document.getElementById('ch-cape'),{type:'line',data:{labels,datasets:[
+    {label:'SP500 CAPE',data:data.map(d=>d.cape_c),borderColor:'var(--blu)',backgroundColor:'rgba(26,94,160,.06)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--blu)',borderWidth:2,fill:true},
+    {label:'Nifty CAPE',data:data.map(d=>d.cape_n),borderColor:'var(--amb)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--amb)',borderWidth:2,fill:false},
+    {label:'SP500 median',data:labels.map(()=>16),borderColor:TC,borderWidth:1.2,borderDash:[4,4],pointRadius:0,fill:false},
+  ]},options:baseOpts(6,50)});
+}
+
+function buildERP(cutoff){
+  const data=filt(cutoff).filter(d=>d.ub), labels=data.map(d=>d.y.toString());
+  const opts=baseOpts(-8,10,true);
+  opts.plugins.tooltip.callbacks.label=c=>' '+c.dataset.label+': '+(c.parsed.y!==null?(c.parsed.y>=0?'+':'')+c.parsed.y.toFixed(2)+'%':'—');
+  opts.scales.y.ticks.callback=v=>(v>=0?'+':'')+v+'%';
+  if(charts.erp)charts.erp.destroy();
+  charts.erp=new Chart(document.getElementById('ch-erp'),{type:'line',data:{labels,datasets:[
+    {label:'SP500 ERP',data:data.map(d=>+(1/d.pe_c*100-d.ub).toFixed(2)),borderColor:'var(--blu)',backgroundColor:'rgba(26,94,160,.06)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--blu)',borderWidth:2,fill:true},
+    {label:'VWRA ERP',data:data.map(d=>+(1/d.pe_v*100-d.ub).toFixed(2)),borderColor:'var(--grn)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--grn)',borderWidth:2,fill:false},
+    {label:'Nifty ERP',data:data.map(d=>d.pe_n&&d.ib?+(1/d.pe_n*100-d.ib).toFixed(2):null),borderColor:'var(--amb)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--amb)',borderWidth:2,fill:false},
+    {label:'Zero',data:labels.map(()=>0),borderColor:TC,borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+  ]},options:opts});
+}
+
+function buildPB(cutoff){
+  const data=filt(cutoff).filter(d=>d.pb_v||d.pb_n), labels=data.map(d=>d.y.toString());
+  if(charts.pb)charts.pb.destroy();
+  charts.pb=new Chart(document.getElementById('ch-pb'),{type:'line',data:{labels,datasets:[
+    {label:'VWRA P/B',data:data.map(d=>d.pb_v||null),borderColor:'var(--grn)',backgroundColor:'rgba(21,102,64,.05)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--grn)',borderWidth:2,fill:true},
+    {label:'Nifty P/B',data:data.map(d=>d.pb_n||null),borderColor:'var(--amb)',tension:.3,pointRadius:3,pointBackgroundColor:'var(--amb)',borderWidth:2,fill:false},
+  ]},options:baseOpts(1,5.5)});
+}
+
+function setPE(r,btn){btn.closest('.rrow').querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');peR=r;buildPE(2026-r);}
+function setCAPE(r,btn){btn.closest('.rrow').querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');capeR=r;buildCAPE(2026-r);}
+function setERP(r,btn){btn.closest('.rrow').querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');erpR=r;buildERP(2026-r);}
+
+// ── NAVIGATION ──
+let chartsBuilt=false,sigBuilt=false;
 function go(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
   btn.classList.add('on');
-  if(id==='history'&&!hi){buildCAPE(2016);buildPE(2021);buildERP(2016);buildBI();hi=true;}
-  if(id==='learn'&&!ki){buildKnow();ki=true;}
-  if(id==='act'){buildAct();} // always rebuild — depends on live data
-  if(id==='history')buildData();
+  if(id==='charts'&&!chartsBuilt){buildPE(2021);buildCAPE(2016);buildERP(2016);buildPB(2019);chartsBuilt=true;}
+  if(id==='signals'&&!sigBuilt){buildSignalDetail();buildFactorGrid();sigBuilt=true;}
+  if(id==='data') buildDataTable();
 }
 
-// ═══════════════════════════════════════
-// REFRESH
-// ═══════════════════════════════════════
-async function doRefresh(){
-  const btn=document.getElementById('rfbtn'),ri=document.getElementById('ri');
-  const st=document.getElementById('status'),sm=document.getElementById('status-msg');
-  btn.disabled=true;ri.innerHTML='<span class="spin">↻</span>';
-  st.className='';sm.textContent='Fetching live data via AI web search…';
-  try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        system:'Financial data assistant. Search for ALL of the following and return ONLY valid JSON with no markdown, no explanation: pe_c (S&P 500 TTM P/E from multpl.com), cape (Shiller CAPE from multpl.com), bi (Buffett Indicator % from gurufocus.com), pe_v (FTSE All-World P/E from worldperatio.com), pe_n (Nifty 50 TTM P/E from nifty-pe-ratio.com), ub (US 10Y Treasury yield %), ib (India 10Y G-Sec yield %), as_of (date string). Return exactly: {"pe_c":num,"cape":num,"bi":num,"pe_v":num,"pe_n":num,"ub":num,"ib":num,"as_of":"date"}',
-        messages:[{role:'user',content:'Search for and return current S&P 500 TTM P/E, Shiller CAPE, Buffett Indicator, All-World P/E, Nifty P/E, US 10Y yield, India 10Y yield. JSON only.'}]})});
-    const data=await resp.json();let parsed=null;
-    for(const b of(data.content||[])){if(b.type==='text'){try{const j=JSON.parse(b.text.replace(/```json|```/g,'').trim());if(j.pe_c&&j.cape){parsed=j;break;}}catch(e){}}}
-    if(parsed){
-      L={y:2026,pe_c:+parsed.pe_c,pe_v:+parsed.pe_v,pe_n:+parsed.pe_n,cape:+parsed.cape,bi:+parsed.bi,ub:+parsed.ub,ib:+parsed.ib};
-      HIST[0]={...HIST[0],...L};
-      renderAll();
-      if(hi){buildCAPE(2026-cR);buildPE(2026-pR);buildERP(2026-eR);buildBI();buildData();}
-      if(ki){document.getElementById('know-cards').innerHTML='';ki=false;buildKnow();}
-      const dt=parsed.as_of||new Date().toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
-      ['hdr-date','footer-date'].forEach(id=>document.getElementById(id).textContent=dt);
-      st.className='ok';
-      sm.textContent=`✓ Updated ${dt} · CAPE: ${L.cape.toFixed(1)}× · S&P 500 P/E: ${L.pe_c.toFixed(2)}× · Buffett Indicator: ${L.bi.toFixed(0)}% · All-World P/E: ${L.pe_v.toFixed(2)}× · Nifty P/E: ${L.pe_n.toFixed(2)}× · US ERP: ${erp_c(L).toFixed(2)}% · India ERP: ${erp_n(L)?.toFixed(2)||'—'}%`;
-    }else{st.className='err';sm.textContent='⚠ Could not parse live data — showing cached values.';}
-  }catch(e){st.className='err';sm.textContent='⚠ Refresh failed: '+e.message;}
-  ri.textContent='↻';btn.disabled=false;
-}
+// ── MODAL ──
+function openModal(){document.getElementById('modal').style.display='flex';}
+function closeModal(){document.getElementById('modal').style.display='none';}
+window.addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
 
-// ═══════════════════════════════════════
-// RENDER ALL
-// ═══════════════════════════════════════
-function renderAll(){
-  buildReasoning();
-  buildIdxGrid();
-  buildAlloc();
-  buildExpRet();
-}
-
-// INIT
-const dt=new Date().toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
-['hdr-date','footer-date'].forEach(id=>document.getElementById(id).textContent=dt);
-renderAll();
+// ── INIT ──
+const dt = new Date().toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'});
+document.getElementById('hdr-date').textContent = L.as_of||dt;
+document.getElementById('footer-date').textContent = L.as_of||dt;
+buildVerdictCards();
+buildSnapTable();
 </script>
 </body>
 </html>
